@@ -18,6 +18,8 @@ export const ChatPage = ({ userName }: ChatProps) => {
     isLoading,
   } = useChat();
 
+  console.log("messages", messages);
+
   return (
     <>
       <div className="flex flex-1 flex-col">
@@ -65,7 +67,9 @@ export const ChatPage = ({ userName }: ChatProps) => {
         </div>
       </div>
 
-      <SignInModal isOpen={false} onClose={() => {}} />
+      <SignInModal isOpen={false} onClose={() => {
+        console.log("modal closed");
+      }} />
     </>
   );
 };

@@ -41,6 +41,10 @@ const Markdown = ({ children }: { children: string }) => {
   return <ReactMarkdown components={components}>{children}</ReactMarkdown>;
 };
 
+// ChatMessage now renders messages using the `parts` array (MessagePart) only.
+// This supersedes the old `text` prop approach. Each message can contain multiple parts, such as text, tool invocations, etc.
+// Hover over tool invocation boxes to see the full tool call/result object.
+// To see all possible part types, explore the MessagePart type (see ai-sdk docs or type definition in this file).
 export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
   const isAI = role === "assistant";
 
