@@ -1,5 +1,6 @@
 import ReactMarkdown, { type Components } from "react-markdown";
 import type { Message } from "ai";
+import { ToolInvocation } from "./tool-invocation";
 
 export type MessagePart = NonNullable<Message["parts"]>[number];
 
@@ -40,11 +41,6 @@ const components: Components = {
 const Markdown = ({ children }: { children: string }) => {
   return <ReactMarkdown components={components}>{children}</ReactMarkdown>;
 };
-
-// ChatMessage now renders messages using the `parts` array (MessagePart) only.
-// This supersedes the old `text` prop approach. Each message can contain multiple parts, such as text, tool invocations, etc.
-// Hover over tool invocation boxes to see the full tool call/result object.
-// To see all possible part types, explore the MessagePart type (see ai-sdk docs or type definition in this file).
 export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
   const isAI = role === "assistant";
 
@@ -64,17 +60,7 @@ export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
               return <Markdown key={i}>{part.text}</Markdown>;
             }
             if (part.type === "tool-invocation") {
-              const { toolInvocation } = part;
-              return (
-                <div key={i} className="my-2 p-2 rounded bg-gray-700 text-gray-100 text-xs cursor-help" title={JSON.stringify(toolInvocation, null, 2)}>
-                  <div><b>Tool Call:</b> <code>{toolInvocation.toolName}</code></div>
-                  <div><b>Args:</b> <code>{JSON.stringify(toolInvocation.args)}</code></div>
-                  {toolInvocation.state === "result" && (
-                    <div><b>Result:</b> <code>{JSON.stringify(toolInvocation.result)}</code></div>
-                  )}
-                  <div className="mt-1 text-gray-400">(Hover to see full tool invocation object)</div>
-                </div>
-              );
+              return <ToolInvocation key={i} part={part} />;
             }
             // Optionally: handle other part types here
             return null;
