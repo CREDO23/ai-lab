@@ -18,7 +18,6 @@ export const ChatPage = ({ userName }: ChatProps) => {
     isLoading,
   } = useChat();
 
-  console.log("messages", messages);
 
   return (
     <>
