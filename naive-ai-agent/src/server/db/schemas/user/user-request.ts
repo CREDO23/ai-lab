@@ -1,6 +1,7 @@
 import { serial, varchar, timestamp } from "drizzle-orm/pg-core";
 import { users } from "./user";
 import { createTable } from "../utils";
+import { relations } from "drizzle-orm";
 
 export const userRequests = createTable("user_requests", {
   id: serial("id").primaryKey(),
@@ -12,3 +13,8 @@ export const userRequests = createTable("user_requests", {
     withTimezone: true,
   }).notNull(),
 });
+
+
+export const userRequestrelations = relations(userRequests, ({ one }) => ({
+  user: one(users, { fields: [userRequests.userId], references: [users.id] }),
+}));

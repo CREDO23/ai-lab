@@ -5,13 +5,12 @@ import { auth } from "~/server/auth";
 import { z } from "zod";
 import { searchSerper } from "~/serper";
 import { db } from "~/server/db";
-import { users, userRequests } from "~/server/db/schema";
 import { eq, and } from "drizzle-orm";
-import type { DB } from "~/server/db/schema";
+import { userRequests, users } from "~/server/db/schemas";
 
 export const maxDuration = 60;
 
-const REQUEST_LIMIT = 3;
+const REQUEST_LIMIT = 10;
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -25,27 +24,23 @@ export async function POST(request: Request) {
   if (!user) {
     return new Response("Unauthorized", { status: 401 });
   }
+
+  // Check today's date (UTC, no time)
+  const now = new Date();
+  now.setUTCHours(0, 0, 0, 0);
+
   if (!user.isAdmin) {
-    // Check today's date (UTC, no time)
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    const req = await db.query.userRequests.findFirst({
-      where: and(eq(userRequests.userId, userId), eq(userRequests.date, today)),
+    const todayRequests = await db.query.userRequests.findMany({
+      where: and(eq(userRequests.userId, userId), eq(userRequests.sentAt, now)),
     });
-    const count = req?.count ?? 0;
-    if (count >= REQUEST_LIMIT) {
-      console.log("Too Many Requests");
+
+    if (todayRequests?.length >= REQUEST_LIMIT ) {
       return new Response("Too Many Requests", { status: 429 });
     }
-    // Increment or insert
-    if (req) {
-      await db.update(userRequests)
-        .set({ count: count + 1 })
-        .where(and(eq(userRequests.userId, userId), eq(userRequests.date, today)));
-    } else {
-      await db.insert(userRequests).values({ userId, date: today, count: 1 });
-    }
   }
+
+  // Insert a new user request
+  await db.insert(userRequests).values({ userId, sentAt: now });
 
   const body = (await request.json()) as {
     messages: Array<Message>;

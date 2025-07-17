@@ -20,9 +20,10 @@ export declare namespace DB {
   >;
 }
 
-
 export * from "./user/account";
 export * from "./user/sessions";
 export * from "./user/token-verification";
 export * from "./user/user";
 export * from "./user/user-request";
+export * from "./chat/chat";
+export * from "./chat/message";
