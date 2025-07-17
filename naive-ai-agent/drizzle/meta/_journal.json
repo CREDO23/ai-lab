@@ -15,6 +15,13 @@
       "when": 1752703481747,
       "tag": "0001_worthless_patch",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1752781434530,
+      "tag": "0002_closed_thunderbolt",
+      "breakpoints": true
     }
   ]
 }
