@@ -1,6 +1,6 @@
 import type { Message } from "ai";
-import { db } from "../db";
-import { chats, messages } from "../db/schemas";
+import { db } from "..";
+import { chats, messages } from "../schemas";
 import { eq } from "drizzle-orm";
 
 export async function upsertChat({
@@ -22,7 +22,7 @@ export async function upsertChat({
     // If chat exixst / throw an eroror (probably belongs to another user)
     if (existingChat.userId !== userId) throw new Error("Chat not found");
 
-    await db.delete(chats).where(eq(chats.id, chatId));
+    await db.delete(messages).where(eq(messages.chatId, chatId));
   } else {
     await db.insert(chats).values({
       id: chatId,
@@ -34,12 +34,12 @@ export async function upsertChat({
   // insert messages
 
   await db.insert(messages).values(
-    chatMessages.map((message) => ({
+    chatMessages.map((message, index) => ({
       id: message.id,
       chatId,
       role: message.role,
       parts: message.content,
-      createdAt: message.createdAt,
+      order: index,
     }))
   );
 }

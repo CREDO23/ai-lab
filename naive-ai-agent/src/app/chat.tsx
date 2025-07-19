@@ -4,20 +4,38 @@ import { ChatMessage } from "~/components/chat-message";
 import { SignInModal } from "~/components/sign-in-modal";
 import { useChat } from "@ai-sdk/react";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { isNewChatCreated } from "./utils";
 
 interface ChatProps {
   userName: string;
+  chatId: string | undefined;
 }
 
-export const ChatPage = ({ userName }: ChatProps) => {
+export const ChatPage = ({ userName, chatId }: ChatProps) => {
   const {
     messages,
     input,
     handleInputChange,
     handleSubmit,
     isLoading,
-  } = useChat();
+    data, // data stream from the AI
+  } = useChat({
+    body: {
+      chatId,
+    },
+  });
 
+  const router = useRouter();
+
+  useEffect(() => {
+    const lastDataStream = data?.[data.length - 1];
+
+    if (lastDataStream && isNewChatCreated(lastDataStream)) {
+      router.push(`?chatId=${lastDataStream.chatId}`);
+    }
+  }, [chatId, data, router]);
 
   return (
     <>
@@ -40,10 +58,7 @@ export const ChatPage = ({ userName }: ChatProps) => {
         </div>
 
         <div className="border-t border-gray-700">
-          <form
-            onSubmit={handleSubmit}
-            className="mx-auto max-w-[65ch] p-4"
-          >
+          <form onSubmit={handleSubmit} className="mx-auto max-w-[65ch] p-4">
             <div className="flex gap-2">
               <input
                 value={input}
@@ -59,16 +74,23 @@ export const ChatPage = ({ userName }: ChatProps) => {
                 disabled={isLoading || !input.trim()}
                 className="rounded bg-gray-700 px-4 py-2 text-white hover:bg-gray-600 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:hover:bg-gray-700"
               >
-                {isLoading ? <Loader2 className="size-4 animate-spin" /> : "Send"}
+                {isLoading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "Send"
+                )}
               </button>
             </div>
           </form>
         </div>
       </div>
 
-      <SignInModal isOpen={false} onClose={() => {
-        console.log("modal closed");
-      }} />
+      <SignInModal
+        isOpen={false}
+        onClose={() => {
+          console.log("modal closed");
+        }}
+      />
     </>
   );
 };

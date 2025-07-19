@@ -3,6 +3,8 @@ import type { accounts } from "./user/account";
 import type { sessions } from "./user/sessions";
 import type { verificationTokens } from "./user/token-verification";
 import type { users } from "./user/user";
+import type { chats } from "./chat/chat";
+import type { messages } from "./chat/message";
 
 export declare namespace DB {
   export type User = InferSelectModel<typeof users>;
@@ -18,6 +20,12 @@ export declare namespace DB {
   export type NewVerificationToken = InferInsertModel<
     typeof verificationTokens
   >;
+
+   export type Chat = InferSelectModel<typeof chats>;
+  export type NewChat = InferInsertModel<typeof chats>;
+
+  export type Message = InferSelectModel<typeof messages>;
+  export type NewMessage = InferInsertModel<typeof messages>;
 }
 
 export * from "./user/account";

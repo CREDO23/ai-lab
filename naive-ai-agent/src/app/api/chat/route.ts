@@ -1,12 +1,17 @@
 import type { Message } from "ai";
-import { streamText, createDataStreamResponse } from "ai";
+import {
+  streamText,
+  createDataStreamResponse,
+  appendResponseMessages,
+} from "ai";
 import { model } from "~/models";
 import { auth } from "~/server/auth";
 import { z } from "zod";
 import { searchSerper } from "~/serper";
 import { db } from "~/server/db";
 import { eq, and } from "drizzle-orm";
-import { userRequests, users } from "~/server/db/schemas";
+import { chats, userRequests, users } from "~/server/db/schemas";
+import { upsertChat } from "~/server/db/queries/upsert-chat";
 
 export const maxDuration = 60;
 
@@ -34,7 +39,7 @@ export async function POST(request: Request) {
       where: and(eq(userRequests.userId, userId), eq(userRequests.sentAt, now)),
     });
 
-    if (todayRequests?.length >= REQUEST_LIMIT ) {
+    if (todayRequests?.length >= REQUEST_LIMIT) {
       return new Response("Too Many Requests", { status: 429 });
     }
   }
@@ -44,19 +49,68 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as {
     messages: Array<Message>;
+    chatId?: string;
   };
+
+  const { chatId, messages } = body;
+
+  if (!messages.length) {
+    return new Response("No messages provided", { status: 400 });
+  }
+
+  let currentChatId = chatId;
+
+  if (!currentChatId) {
+    const newChatId = crypto.randomUUID();
+
+    await upsertChat({
+      chatId: newChatId,
+      userId,
+      chatTitle: messages[messages.length - 1]!.content.slice(0, 50) + "...",
+      chatMessages: messages,  // Only save the user's message initially
+    });
+
+    currentChatId = newChatId;
+  } else {
+    // veriify if the chat belongs to the user
+    const chat = await db.query.chats.findFirst({
+      where: eq(chats.id, currentChatId),
+    });
+
+    if (!chat || chat.userId !== userId) {
+      return new Response("chat not found or unauthorized", { status: 401 });
+    }
+  }
 
   return createDataStreamResponse({
     execute: async (dataStream) => {
       const { messages } = body;
 
+      console.log(chatId, currentChatId);
+
+
+      if(!chatId){
+        // If it is a new chat , we need to send the chat ID generated to the frontend
+
+        dataStream.writeData({
+          type : 'NEW_CHAT_CREATED',
+          chatId : currentChatId,
+        })
+      }
+
       const result = streamText({
         model,
         messages,
-        system: `You are an AI assistant with access to a web search tool. Always use the searchWeb tool to answer questions, and always cite your sources with inline markdown links.
-        
-        1. Always search the web for up-to-date information.
-        2. ALWAYS format URLs as markdown links using the format [title](url)
+        system: `You are a helpful AI assistant with access to real-time web search capabilities. When answering questions:
+
+1. Always search the web for up-to-date information when relevant
+2. ALWAYS format URLs as markdown links using the format [title](url)
+3. Be thorough but concise in your responses
+4. If you're unsure about something, search the web to verify
+5. When providing information, always include the source where you found it using markdown links
+6. Never include raw URLs - always use markdown link format
+
+Remember to use the searchWeb tool whenever you need to find current information.
         `,
         tools: {
           searchWeb: {
@@ -77,6 +131,32 @@ export async function POST(request: Request) {
           },
         },
         maxSteps: 10,
+
+        onFinish : async ({ response }) => {
+          //Merge the exixsting messages with the response messages
+          const updatedmessages = appendResponseMessages({
+            messages,
+            responseMessages: response.messages,
+          });
+
+          const lastMessage = updatedmessages[updatedmessages.length - 1];
+
+        
+
+          if(!lastMessage){
+            return
+          }
+
+          // Save complete chat history (user messages + AI. response messages)
+          await upsertChat({
+            chatId: currentChatId,
+            userId,
+            chatTitle: lastMessage.content.slice(0, 50) + "...",
+            chatMessages: updatedmessages,
+          });
+
+
+        },
       });
 
       result.mergeIntoDataStream(dataStream);

@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
-import { db } from "../db";
-import { chats } from "../db/schemas";
+import { db } from "..";
+import { chats } from "../schemas";
 
 export async function getChat(
   userId: string,
