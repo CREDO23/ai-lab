@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       const result = streamText({
         model,
         messages,
-        system: `You are a helpful AI assistant with access to real-time web search capabilities. When answering questions:
+        system: `You are a helpful AI assistant with access to real-time web search capabilities. The current date is ${new Date().toISOString()}. When answering questions:
 
 1. Always search the web for up-to-date information when relevant
 2. ALWAYS format URLs as markdown links using the format [title](url)
@@ -140,6 +140,7 @@ Remember to:
                 title: result.title,
                 link: result.link,
                 snippet: result.snippet,
+                date : result.date
               }));
             },
           },
