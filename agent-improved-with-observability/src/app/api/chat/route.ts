@@ -12,10 +12,15 @@ import { db } from "~/server/db";
 import { eq, and } from "drizzle-orm";
 import { chats, userRequests, users } from "~/server/db/schemas";
 import { upsertChat } from "~/server/db/queries/upsert-chat";
+import { Langfuse } from "langfuse";
 
 export const maxDuration = 60;
 
 const REQUEST_LIMIT = 10;
+
+const langfuse = new Langfuse({
+  environment: process.env.NODE_ENV,
+});
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -43,9 +48,6 @@ export async function POST(request: Request) {
       return new Response("Too Many Requests", { status: 429 });
     }
   }
-
-  // Insert a new user request
-  await db.insert(userRequests).values({ userId, sentAt: now });
 
   const body = (await request.json()) as {
     messages: Array<Message>;
@@ -76,6 +78,12 @@ export async function POST(request: Request) {
       return new Response("chat not found or unauthorized", { status: 401 });
     }
   }
+
+  const trace = langfuse.trace({
+    sessionId: chatId,
+    name: "chat",
+    userId,
+  });
 
   return createDataStreamResponse({
     execute: async (dataStream) => {
@@ -111,6 +119,7 @@ Remember to use the searchWeb tool whenever you need to find current information
             }),
             execute: async ({ query }, { abortSignal }) => {
               const results = await searchSerper(
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 { q: query, num: 10 },
                 abortSignal,
               );
@@ -123,7 +132,13 @@ Remember to use the searchWeb tool whenever you need to find current information
           },
         },
         maxSteps: 10,
-
+        experimental_telemetry: {
+          isEnabled: true,
+          functionId: "agent-function",
+          metadata: {
+            langfuseTraceId: trace.id,
+          },
+        },
         onFinish: async ({ response }) => {
           //Merge the exixsting messages with the response messages
           const updatedmessages = appendResponseMessages({
@@ -144,6 +159,12 @@ Remember to use the searchWeb tool whenever you need to find current information
             chatTitle: lastMessage.content.slice(0, 50) + "...",
             chatMessages: updatedmessages,
           });
+
+          // Insert a new user request
+          await db.insert(userRequests).values({ userId, sentAt: now });
+
+          // Flush the trace with all data to langfuse platform
+          await langfuse.flushAsync();
         },
       });
 
