@@ -3,22 +3,30 @@ import Link from "next/link";
 import { auth } from "~/server/auth/index.ts";
 import { ChatPage } from "./chat.tsx";
 import { AuthButton } from "../components/auth-button.tsx";
-
-const chats = [
-  {
-    id: "1",
-    title: "My First Chat",
-  },
-];
+import type { Message } from "ai";
+import { getChats } from "~/server/db/queries/get-chats.ts";
+import { getChat } from "~/server/db/queries/get-chat.ts";
 
 const activeChatId = "1";
 
-export default async function HomePage({searchParams} : {searchParams : Promise<{chatId?: string}>}) {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ chatId?: string }>;
+}) {
   const session = await auth();
   const userName = session?.user?.name ?? "Guest";
   const isAuthenticated = !!session?.user;
+  const userId = session?.user?.id;
 
   const { chatId } = await searchParams;
+
+  const chats = userId ? await getChats({ userId }) : [];
+
+  const activeChat =
+    chatId && userId
+      ? await getChat({ userId, chatId })
+      : undefined;
 
   return (
     <div className="flex h-screen bg-gray-950">
@@ -70,7 +78,26 @@ export default async function HomePage({searchParams} : {searchParams : Promise<
         </div>
       </div>
 
-      <ChatPage chatId={chatId} userName={userName} />
+      <ChatPage
+        initialMessages={activeChat?.messages.map((el) => {
+          return {
+            id: el.id,
+            // msg.role is typed as string, so we
+            // need to cast it to the correct type
+            role: el.role as "user" | "assistant",
+            // msg.parts is typed as unknown[], so we
+            // need to cast it to the correct type
+            parts: el.parts as Message["parts"],
+            // content is not persisted, so we can
+            // safely pass an empty string, because
+            // parts are always present, and the AI SDK
+            // will use the parts to construct the content
+            content: "",
+          };
+        })}
+        chatId={chatId}
+        userName={userName}
+      />
     </div>
   );
 }

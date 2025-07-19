@@ -38,7 +38,7 @@ export async function upsertChat({
       id: message.id,
       chatId,
       role: message.role,
-      parts: message.content,
+      parts: message.parts,
       order: index,
     }))
   );
