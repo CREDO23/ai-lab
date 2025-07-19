@@ -7,7 +7,6 @@ import type { Message } from "ai";
 import { getChats } from "~/server/db/queries/get-chats.ts";
 import { getChat } from "~/server/db/queries/get-chat.ts";
 
-const activeChatId = "1";
 
 export default async function HomePage({
   searchParams,
@@ -19,7 +18,11 @@ export default async function HomePage({
   const isAuthenticated = !!session?.user;
   const userId = session?.user?.id;
 
-  const { chatId } = await searchParams;
+  const { chatId : chatIdFromSearchParams } = await searchParams;
+
+  const chatId = chatIdFromSearchParams ?? crypto.randomUUID();
+
+  const isNewChat = !chatIdFromSearchParams;
 
   const chats = userId ? await getChats({ userId }) : [];
 
@@ -27,6 +30,24 @@ export default async function HomePage({
     chatId && userId
       ? await getChat({ userId, chatId })
       : undefined;
+
+
+      const initialChatMessages = activeChat?.messages.map((el) => {
+          return {
+            id: el.id,
+            // msg.role is typed as string, so we
+            // need to cast it to the correct type
+            role: el.role as "user" | "assistant",
+            // msg.parts is typed as unknown[], so we
+            // need to cast it to the correct type
+            parts: el.parts as Message["parts"],
+            // content is not persisted, so we can
+            // safely pass an empty string, because
+            // parts are always present, and the AI SDK
+            // will use the parts to construct the content
+            content: "",
+          };
+        })
 
   return (
     <div className="flex h-screen bg-gray-950">
@@ -53,7 +74,7 @@ export default async function HomePage({
                 <Link
                   href={`/?chatId=${chat.id}`}
                   className={`flex-1 rounded-lg p-3 text-left text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                    chat.id === activeChatId
+                    chat.id === chatId
                       ? "bg-gray-700"
                       : "hover:bg-gray-750 bg-gray-800"
                   }`}
@@ -79,24 +100,11 @@ export default async function HomePage({
       </div>
 
       <ChatPage
-        initialMessages={activeChat?.messages.map((el) => {
-          return {
-            id: el.id,
-            // msg.role is typed as string, so we
-            // need to cast it to the correct type
-            role: el.role as "user" | "assistant",
-            // msg.parts is typed as unknown[], so we
-            // need to cast it to the correct type
-            parts: el.parts as Message["parts"],
-            // content is not persisted, so we can
-            // safely pass an empty string, because
-            // parts are always present, and the AI SDK
-            // will use the parts to construct the content
-            content: "",
-          };
-        })}
+        initialMessages={initialChatMessages}
         chatId={chatId}
         userName={userName}
+        isNewChat={isNewChat}
+        key={chatId}
       />
     </div>
   );

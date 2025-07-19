@@ -2,7 +2,7 @@
 
 import { ChatMessage } from "~/components/chat-message";
 import { SignInModal } from "~/components/sign-in-modal";
-import { useChat} from "@ai-sdk/react";
+import { useChat } from "@ai-sdk/react";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -11,11 +11,17 @@ import type { Message } from "ai";
 
 interface ChatProps {
   userName: string;
-  chatId: string | undefined;
-  initialMessages ? : Message[];
+  chatId: string;
+  initialMessages?: Message[];
+  isNewChat: boolean;
 }
 
-export const ChatPage = ({ userName, chatId, initialMessages }: ChatProps) => {
+export const ChatPage = ({
+  userName,
+  chatId,
+  initialMessages,
+  isNewChat,
+}: ChatProps) => {
   const {
     messages,
     input,
@@ -26,6 +32,7 @@ export const ChatPage = ({ userName, chatId, initialMessages }: ChatProps) => {
   } = useChat({
     body: {
       chatId,
+      isNewChat,
     },
     initialMessages,
   });
@@ -38,7 +45,7 @@ export const ChatPage = ({ userName, chatId, initialMessages }: ChatProps) => {
     if (lastDataStream && isNewChatCreated(lastDataStream)) {
       router.push(`?chatId=${lastDataStream.chatId}`);
     }
-  }, [chatId, data, router]);
+  }, [data, router]);
 
   return (
     <>

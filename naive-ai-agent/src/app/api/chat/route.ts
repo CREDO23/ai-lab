@@ -49,32 +49,27 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as {
     messages: Array<Message>;
-    chatId?: string;
+    chatId: string;
+    isNewChat: boolean;
   };
 
-  const { chatId, messages } = body;
+  const { chatId, messages, isNewChat } = body;
 
   if (!messages.length) {
     return new Response("No messages provided", { status: 400 });
   }
 
-  let currentChatId = chatId;
-
-  if (!currentChatId) {
-    const newChatId = crypto.randomUUID();
-
+  if (isNewChat) {
     await upsertChat({
-      chatId: newChatId,
+      chatId,
       userId,
       chatTitle: messages[messages.length - 1]!.content.slice(0, 50) + "...",
-      chatMessages: messages,  // Only save the user's message initially
+      chatMessages: messages, // Only save the user's message initially
     });
-
-    currentChatId = newChatId;
   } else {
     // veriify if the chat belongs to the user
     const chat = await db.query.chats.findFirst({
-      where: eq(chats.id, currentChatId),
+      where: eq(chats.id, chatId),
     });
 
     if (!chat || chat.userId !== userId) {
@@ -86,16 +81,13 @@ export async function POST(request: Request) {
     execute: async (dataStream) => {
       const { messages } = body;
 
-      console.log(chatId, currentChatId);
-
-
-      if(!chatId){
+      if (isNewChat) {
         // If it is a new chat , we need to send the chat ID generated to the frontend
 
         dataStream.writeData({
-          type : 'NEW_CHAT_CREATED',
-          chatId : currentChatId,
-        })
+          type: "NEW_CHAT_CREATED",
+          chatId,
+        });
       }
 
       const result = streamText({
@@ -132,7 +124,7 @@ Remember to use the searchWeb tool whenever you need to find current information
         },
         maxSteps: 10,
 
-        onFinish : async ({ response }) => {
+        onFinish: async ({ response }) => {
           //Merge the exixsting messages with the response messages
           const updatedmessages = appendResponseMessages({
             messages,
@@ -141,21 +133,17 @@ Remember to use the searchWeb tool whenever you need to find current information
 
           const lastMessage = updatedmessages[updatedmessages.length - 1];
 
-        
-
-          if(!lastMessage){
-            return
+          if (!lastMessage) {
+            return;
           }
 
           // Save complete chat history (user messages + AI. response messages)
           await upsertChat({
-            chatId: currentChatId,
+            chatId,
             userId,
             chatTitle: lastMessage.content.slice(0, 50) + "...",
             chatMessages: updatedmessages,
           });
-
-
         },
       });
 
