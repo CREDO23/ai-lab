@@ -30,11 +30,21 @@ export async function POST(request: Request) {
   }
   const userId = session.user.id;
 
+    const trace = langfuse.trace({
+    name: "chat",
+    userId
+  });
+
+
+
+
   // Check if user is admin
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
   if (!user) {
     return new Response("Unauthorized", { status: 401 });
   }
+
+
 
   // Check today's date (UTC, no time)
   const now = new Date();
@@ -44,6 +54,20 @@ export async function POST(request: Request) {
     const todayRequests = await db.query.userRequests.findMany({
       where: and(eq(userRequests.userId, userId), eq(userRequests.sentAt, now)),
     });
+
+  const checkUserLimitSpan = trace.span({
+    name: "check-user-limit",
+      input: {
+      isAdmin: user.isAdmin,
+       todayRequests: todayRequests?.length,
+    },
+  });
+
+    checkUserLimitSpan.end({
+      output: {
+        isOverLimit: todayRequests?.length >= REQUEST_LIMIT,
+      },
+    })
 
     if (todayRequests?.length >= REQUEST_LIMIT) {
       return new Response("Too Many Requests", { status: 429 });
@@ -63,16 +87,47 @@ export async function POST(request: Request) {
   }
 
   if (isNewChat) {
+    const createChatSpan = trace.span({
+      name: "create-chat",
+      input: {
+        chatId,
+        userId,
+        chatTitle: messages[messages.length - 1]!.content.slice(0, 50) + "...",
+        chatMessages: messages,
+      },
+    });
+
     await upsertChat({
       chatId,
       userId,
       chatTitle: messages[messages.length - 1]!.content.slice(0, 50) + "...",
       chatMessages: messages, // Only save the user's message initially
     });
+
+    createChatSpan.end({
+      output: {
+        chatId,
+      },
+    });
   } else {
+    const verifyChatOwnershipSpan = trace.span({
+      name: "verify-chat-ownership",
+      input: {
+        chatId,
+        userId,
+      },
+    });
+
     // veriify if the chat belongs to the user
     const chat = await db.query.chats.findFirst({
       where: eq(chats.id, chatId),
+    });
+
+    verifyChatOwnershipSpan.end({
+      output: {
+        chatId,
+        chatUserId: chat?.userId,
+      },
     });
 
     if (!chat || chat.userId !== userId) {
@@ -80,11 +135,11 @@ export async function POST(request: Request) {
     }
   }
 
-  const trace = langfuse.trace({
-    sessionId: chatId,
-    name: "chat",
-    userId,
-  });
+
+  trace.update({
+    sessionId : chatId,
+  })
+
 
   return createDataStreamResponse({
     execute: async (dataStream) => {
@@ -197,6 +252,17 @@ Remember to:
             return;
           }
 
+          const saveChatHistorySpan = trace.span({
+            name: "save-chat-history",
+            input: {
+              chatId,
+              userId,
+              chatTitle: lastMessage.content.slice(0, 50) + "...",
+              chatMessages: updatedmessages,
+              messageCount: updatedmessages.length,
+            },
+          });
+
           // Save complete chat history (user messages + AI. response messages)
           await upsertChat({
             chatId,
@@ -205,9 +271,26 @@ Remember to:
             chatMessages: updatedmessages,
           });
 
+          saveChatHistorySpan.end({
+            output: {
+              success: true ,
+            },
+          });
+
+          const insertUserRequestSpan = trace.span({
+            name: "insert-new-user-request",
+            input: {
+              userId,
+            },
+          });
           // Insert a new user request
           await db.insert(userRequests).values({ userId, sentAt: now });
 
+          insertUserRequestSpan.end({
+            output: {
+              success: true ,
+            },
+          });
           // Flush the trace with all data to langfuse platform
           await langfuse.flushAsync();
         },
