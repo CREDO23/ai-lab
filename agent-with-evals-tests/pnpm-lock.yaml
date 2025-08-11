@@ -127,7 +127,7 @@ importers:
         specifier: ^0.0.119
         version: 0.0.119
       dotenv:
-        specifier: ^16.4.7
+        specifier: ^16.6.1
         version: 16.6.1
       drizzle-kit:
         specifier: ^0.24.0

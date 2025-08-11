@@ -1,4 +1,4 @@
-import type { Message } from "ai";
+import type { Message, TelemetrySettings } from "ai";
 import {
   streamText,
   createDataStreamResponse,
@@ -14,6 +14,7 @@ import { chats, userRequests, users } from "~/server/db/schemas";
 import { upsertChat } from "~/server/db/queries/upsert-chat";
 import { Langfuse } from "langfuse";
 import { bulkCrawlWebsites } from "~/crawler";
+import { streamFromDeepSearch } from "../services/deep-search.service";
 
 export const maxDuration = 60;
 
@@ -30,21 +31,16 @@ export async function POST(request: Request) {
   }
   const userId = session.user.id;
 
-    const trace = langfuse.trace({
+  const trace = langfuse.trace({
     name: "chat",
-    userId
+    userId,
   });
-
-
-
 
   // Check if user is admin
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
   if (!user) {
     return new Response("Unauthorized", { status: 401 });
   }
-
-
 
   // Check today's date (UTC, no time)
   const now = new Date();
@@ -55,19 +51,19 @@ export async function POST(request: Request) {
       where: and(eq(userRequests.userId, userId), eq(userRequests.sentAt, now)),
     });
 
-  const checkUserLimitSpan = trace.span({
-    name: "check-user-limit",
+    const checkUserLimitSpan = trace.span({
+      name: "check-user-limit",
       input: {
-      isAdmin: user.isAdmin,
-       todayRequests: todayRequests?.length,
-    },
-  });
+        isAdmin: user.isAdmin,
+        todayRequests: todayRequests?.length,
+      },
+    });
 
     checkUserLimitSpan.end({
       output: {
         isOverLimit: todayRequests?.length >= REQUEST_LIMIT,
       },
-    })
+    });
 
     if (todayRequests?.length >= REQUEST_LIMIT) {
       return new Response("Too Many Requests", { status: 429 });
@@ -135,11 +131,9 @@ export async function POST(request: Request) {
     }
   }
 
-
   trace.update({
-    sessionId : chatId,
-  })
-
+    sessionId: chatId,
+  });
 
   return createDataStreamResponse({
     execute: async (dataStream) => {
@@ -154,85 +148,9 @@ export async function POST(request: Request) {
         });
       }
 
-      const result = streamText({
-        model,
+      const result = streamFromDeepSearch({
         messages,
-        system: `You are a helpful AI assistant with access to real-time web search capabilities. The current date is ${new Date().toISOString()}. When answering questions:
-
-1. Always search the web for up-to-date information when relevant
-2. ALWAYS format URLs as markdown links using the format [title](url)
-3. Be thorough but concise in your responses
-4. If you're unsure about something, search the web to verify
-5. When providing information, always include the source where you found it using markdown links
-6. Never include raw URLs - always use markdown link format
-7. When users ask for up-to-date information, use the current date to provide context about how recent the information is
-8. IMPORTANT: After finding relevant URLs from search results, ALWAYS use the scrapePages tool to get the full content of those pages. Never rely solely on search snippets.
-
-Your workflow should be:
-1. Use searchWeb to find 10 relevant URLs from diverse sources (news sites, blogs, official documentation, etc.)
-2. Select 4-6 of the most relevant and diverse URLs to scrape
-3. Use scrapePages to get the full content of those URLs
-4. Use the full content to provide detailed, accurate answers
-
-Remember to:
-- Always scrape multiple sources (4-6 URLs) for each query
-- Choose diverse sources (e.g., not just news sites or just blogs)
-- Prioritize official sources and authoritative websites
-- Use the full content to provide comprehensive answers.
-        `,
-        tools: {
-          searchWeb: {
-            parameters: z.object({
-              query: z.string().describe("The query to search the web for"),
-            }),
-            execute: async ({ query }, { abortSignal }) => {
-              const results = await searchSerper(
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                { q: query, num: 10 },
-                abortSignal,
-              );
-              return results.organic.map((result) => ({
-                title: result.title,
-                link: result.link,
-                snippet: result.snippet,
-                date : result.date
-              }));
-            },
-          },
-          scrapePages : {
-            parameters: z.object({
-              urls: z.array(z.string().describe("The URL to scrape")),
-            }),
-            execute: async ({ urls }, { abortSignal }) => {
-              const results = await bulkCrawlWebsites({urls});
-       
-              if(!results.success){
-                return {
-                  error : results.error,
-                  results : results.results.map(({url , result}) => {
-                    return {
-                      url,
-                      success : result.success,
-                      data : result.success ? result.data : result.error,
-                    }
-                  }),
-                }
-              }
-
-              return {
-                results : results.results.map(({url , result}) => {
-                  return {
-                    url,
-                    success : result.success,
-                    data : result.data
-                  }
-                }),
-              }
-            },
-          }
-        },
-        maxSteps: 10,
-        experimental_telemetry: {
+         telemetry: {
           isEnabled: true,
           functionId: "agent-function",
           metadata: {
@@ -273,7 +191,7 @@ Remember to:
 
           saveChatHistorySpan.end({
             output: {
-              success: true ,
+              success: true,
             },
           });
 
@@ -288,13 +206,13 @@ Remember to:
 
           insertUserRequestSpan.end({
             output: {
-              success: true ,
+              success: true,
             },
           });
           // Flush the trace with all data to langfuse platform
           await langfuse.flushAsync();
         },
-      });
+      })
 
       result.mergeIntoDataStream(dataStream);
     },
@@ -304,3 +222,4 @@ Remember to:
     },
   });
 }
+

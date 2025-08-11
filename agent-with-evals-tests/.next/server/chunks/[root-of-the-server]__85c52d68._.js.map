@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 29, "column": 0}, "map": {"version":3,"sources":["file:///home/credo/labs/ai-lab/agent-with-evals-tests/src/instrumentation.ts"],"sourcesContent":["import { registerOTel } from \"@vercel/otel\";\nimport { LangfuseExporter } from \"langfuse-vercel\";\n\nexport function register() {\n  registerOTel({\n    serviceName: \"langfuse-deep-search\",\n    traceExporter: new LangfuseExporter({\n        environment: process.env.NODE_ENV,\n    }),\n  });\n}"],"names":[],"mappings":";;;AAAA;AACA;;;AAEO,SAAS;IACd,CAAA,GAAA,wWAAA,CAAA,eAAY,AAAD,EAAE;QACX,aAAa;QACb,eAAe,IAAI,uRAAA,CAAA,mBAAgB,CAAC;YAChC,WAAW;QACf;IACF;AACF","debugId":null}}]
+}

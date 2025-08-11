@@ -1,0 +1,14 @@
+const CHUNK_PUBLIC_PATH = "server/app/api/auth/[...nextauth]/route.js";
+const runtime = require("../../../../chunks/[turbopack]_runtime.js");
+runtime.loadChunk("server/chunks/1208e_next_9e65aa1b._.js");
+runtime.loadChunk("server/chunks/8e59f_@opentelemetry_api_build_esm_fa2266d7._.js");
+runtime.loadChunk("server/chunks/c1962_@auth_core_6f6eb11e._.js");
+runtime.loadChunk("server/chunks/990b6_jose_dist_node_esm_e7de0bd5._.js");
+runtime.loadChunk("server/chunks/94c69_drizzle-orm_0bd5057d._.js");
+runtime.loadChunk("server/chunks/6bda3_@auth_drizzle-adapter_afe4cd3b._.js");
+runtime.loadChunk("server/chunks/98319_zod_v3_d7a665b3._.js");
+runtime.loadChunk("server/chunks/node_modules__pnpm_3a044385._.js");
+runtime.loadChunk("server/chunks/[root-of-the-server]__9bc7beb1._.js");
+runtime.getOrInstantiateRuntimeModule("[project]/.next-internal/server/app/api/auth/[...nextauth]/route/actions.js [app-rsc] (server actions loader, ecmascript)", CHUNK_PUBLIC_PATH);
+runtime.getOrInstantiateRuntimeModule("[project]/node_modules/.pnpm/next@15.4.2_@opentelemetry+api@1.9.0_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/src/app/api/auth/[...nextauth]/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)", CHUNK_PUBLIC_PATH);
+module.exports = runtime.getOrInstantiateRuntimeModule("[project]/node_modules/.pnpm/next@15.4.2_@opentelemetry+api@1.9.0_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/src/app/api/auth/[...nextauth]/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)", CHUNK_PUBLIC_PATH).exports;
