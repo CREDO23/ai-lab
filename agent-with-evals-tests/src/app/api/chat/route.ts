@@ -15,10 +15,15 @@ import { upsertChat } from "~/server/db/queries/upsert-chat";
 import { Langfuse } from "langfuse";
 import { bulkCrawlWebsites } from "~/crawler";
 import { streamFromDeepSearch } from "../services/deep-search.service";
+import {
+  checkRateLimit,
+  globalRateLimitConfig,
+  recordRateLimit,
+} from "../services/rate-limit.service";
 
 export const maxDuration = 60;
 
-const REQUEST_LIMIT = 10;
+const REQUEST_LIMIT = 200;
 
 const langfuse = new Langfuse({
   environment: process.env.NODE_ENV,
@@ -30,6 +35,23 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
   const userId = session.user.id;
+
+  // Check the rate limit
+  const rateLimitCheck = await checkRateLimit(globalRateLimitConfig);
+
+  if (!rateLimitCheck.allowed) {
+    console.log("Rate limit exceeded, waiting...");
+    const isAllowed = await rateLimitCheck.retry();
+    // If the rate limit is still exceeded, return a 429
+    if (!isAllowed) {
+      return new Response("Rate limit exceeded", {
+        status: 429,
+      });
+    }
+  }
+
+  // Record the request
+  await recordRateLimit(globalRateLimitConfig);
 
   const trace = langfuse.trace({
     name: "chat",
@@ -150,7 +172,7 @@ export async function POST(request: Request) {
 
       const result = streamFromDeepSearch({
         messages,
-         telemetry: {
+        telemetry: {
           isEnabled: true,
           functionId: "agent-function",
           metadata: {
@@ -212,7 +234,7 @@ export async function POST(request: Request) {
           // Flush the trace with all data to langfuse platform
           await langfuse.flushAsync();
         },
-      })
+      });
 
       result.mergeIntoDataStream(dataStream);
     },
@@ -222,4 +244,3 @@ export async function POST(request: Request) {
     },
   });
 }
-

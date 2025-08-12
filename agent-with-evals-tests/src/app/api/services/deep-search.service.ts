@@ -3,6 +3,7 @@ import z from "zod";
 import { bulkCrawlWebsites } from "~/crawler";
 import { model } from "~/models";
 import { searchSerper } from "~/serper";
+import { redis } from "~/server/redis/redis";
 
 export const streamFromDeepSearch = (opts: {
   messages: Message[];
