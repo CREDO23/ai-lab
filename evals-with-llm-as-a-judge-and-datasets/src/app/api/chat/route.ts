@@ -9,7 +9,6 @@ import { eq, and } from "drizzle-orm";
 import { chats, userRequests, users } from "~/server/db/schemas";
 import { upsertChat } from "~/server/db/queries/upsert-chat";
 import { Langfuse } from "langfuse";
-import { bulkCrawlWebsites } from "~/crawler";
 import { streamFromDeepSearch } from "../services/deep-search.service";
 import {
   checkRateLimit,
@@ -166,7 +165,7 @@ export async function POST(request: Request) {
         });
       }
 
-      const result = streamFromDeepSearch({
+      const result = await streamFromDeepSearch({
         messages,
         telemetry: {
           isEnabled: true,

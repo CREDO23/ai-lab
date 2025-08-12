@@ -1,9 +1,10 @@
 import { evalite } from "evalite";
 import type { Message } from "ai";
 import { askDeepSearch } from "~/app/api/services/deep-search.service";
-import { factualityScorer } from "~/models/factuality";
+import { factualityScorer } from "./scrorers/factuality-scorer";
+import { sourceLinksScorer } from "./scrorers/source-links-scorer";
 
-evalite("Deep search eval", {
+evalite("Initial eval", {
   data: async (): Promise<{ input: string; expected: string }[]> => {
     return [
       {
@@ -42,5 +43,8 @@ Development and Build Performance: Improved build times and Faster Fast Refresh.
     ];
     return askDeepSearch(messages);
   },
-  scorers: [factualityScorer],
+  scorers: [
+    sourceLinksScorer,
+    factualityScorer,
+  ],
 });

@@ -1,7 +1,7 @@
 import { createScorer } from "evalite";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { factualityModel } from ".";
+import { factualityModel } from "~/models";
 
 export const checkFactuality = async (opts: {
   question: string;
@@ -66,13 +66,13 @@ export const checkFactuality = async (opts: {
   };
 };
 
-// This is the scorer that can be passed into the scorers in Evalite
 export const factualityScorer = createScorer<
   string,
   string,
   string
 >({
   name: "Factuality",
+  description : "Whether the answer is verifiably accurate.",
   scorer: async ({ input, expected, output }) => {
     return checkFactuality({
       question: input,
