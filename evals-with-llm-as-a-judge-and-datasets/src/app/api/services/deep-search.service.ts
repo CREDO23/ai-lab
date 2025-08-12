@@ -3,9 +3,8 @@ import z from "zod";
 import { bulkCrawlWebsites } from "~/crawler";
 import { model } from "~/models";
 import { searchSerper } from "~/serper";
-import { redis } from "~/server/redis/redis";
 
-export const streamFromDeepSearch = (opts: {
+export const streamFromDeepSearch = async (opts: {
   messages: Message[];
   onFinish: Parameters<typeof streamText>[0]["onFinish"];
   telemetry: TelemetrySettings;
@@ -59,7 +58,9 @@ Remember to:
         parameters: z.object({
           urls: z.array(z.string().describe("The URL to scrape")),
         }),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         execute: async ({ urls }, { abortSignal }) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const results = await bulkCrawlWebsites({ urls });
 
           if (!results.success) {
@@ -97,6 +98,7 @@ Remember to:
 export async function askDeepSearch(messages: Message[]) {
   const result = await streamFromDeepSearch({
     messages,
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     onFinish: async () => {},
     telemetry: {
       isEnabled: false,
