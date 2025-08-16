@@ -1,13 +1,12 @@
-import { streamText, type StreamTextResult } from "ai";
+import { smoothStream, streamText, type StreamTextResult } from "ai";
 import { type SystemContext } from "./system-context";
 import { model } from "~/models";
+import { markdownJoinerTransform } from "../../../utils/marksown-joiner-transform";
 
 export function answerQuestion(
   ctx: SystemContext,
   opts: {
     isFinal?: boolean;
-    // langfuseTraceId?: string;
-    // onFinish: Parameters<typeof streamText>[0]["onFinish"];
   },
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 ): StreamTextResult<{}, string> {
@@ -33,15 +32,9 @@ Based on the following context, please answer the question:
 ${ctx.getQueryHistory()}
 
 ${ctx.getScrapeHistory()}`,
-    // experimental_telemetry: langfuseTraceId
-    //   ? {
-    //       isEnabled: true,
-    //       functionId: "answer-question",
-    //       metadata: {
-    //         langfuseTraceId,
-    //       },
-    //     }
-    //   : undefined,
-    // onFinish,
+    experimental_transform: [
+      smoothStream({ delayInMs: 150, chunking: "word" }),
+      markdownJoinerTransform(),
+    ],
   });
 }
