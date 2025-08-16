@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { isNewChatCreated } from "./utils";
 import type { Message } from "ai";
 import { StickToBottom } from "use-stick-to-bottom";
+import type { OurMessageAnnotation } from "./api/services/deep-search.service";
 
 interface ChatProps {
   userName: string;
@@ -68,6 +69,9 @@ export const ChatPage = ({
                   parts={message.parts}
                   role={message.role}
                   userName={userName}
+                   annotations={
+                  (message.annotations ?? []) as OurMessageAnnotation[]
+                }
                 />
               );
             })}

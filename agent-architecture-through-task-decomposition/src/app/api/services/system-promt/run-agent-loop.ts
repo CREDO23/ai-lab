@@ -1,18 +1,17 @@
 import { SystemContext } from "./system-context";
-import { getNextAction, type Action } from "./get-next-action";
+import { getNextAction } from "./get-next-action";
 import { type StreamTextResult, type Message } from "ai";
 import { answerQuestion } from "./answer-question";
 import { searchSerper } from "~/serper";
 import { bulkCrawlWebsites } from "~/crawler";
 import { env } from "~/env";
-
-export type OurMessageAnnotation = {
-  type: "NEW_ACTION";
-  action: Action;
-};
+import type { OurMessageAnnotation } from "../deep-search.service";
 
 export async function runAgentLoop(
   messages: Message[],
+  opts: {
+    writeMessageAnnotation?: (annotation: OurMessageAnnotation) => void;
+  },
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 ): Promise<StreamTextResult<{}, string>> {
   // A persistent container for the state of our system
@@ -23,6 +22,14 @@ export async function runAgentLoop(
   while (!ctx.shouldStop()) {
     // We choose the next action based on the state of our system
     const nextAction = await getNextAction(ctx);
+
+    // Send the action as an annotation if writeMessageAnnotation is provided
+    if (opts.writeMessageAnnotation) {
+      opts.writeMessageAnnotation({
+        type: "NEW_ACTION",
+        action: nextAction,
+      });
+    }
 
     // We execute the action and update the state of our system
     if (nextAction.type === "search") {

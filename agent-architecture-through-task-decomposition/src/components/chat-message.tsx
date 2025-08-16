@@ -1,6 +1,8 @@
 import ReactMarkdown, { type Components } from "react-markdown";
 import type { Message } from "ai";
 import { ToolInvocation } from "./tool-invocation";
+import type { OurMessageAnnotation } from "~/app/api/services/deep-search.service";
+import { ReasoningSteps } from "./reasonning-step";
 
 export type MessagePart = NonNullable<Message["parts"]>[number];
 
@@ -8,6 +10,7 @@ interface ChatMessageProps {
   parts: MessagePart[];
   role: string;
   userName: string;
+  annotations: OurMessageAnnotation[];
 }
 
 const components: Components = {
@@ -41,7 +44,12 @@ const components: Components = {
 const Markdown = ({ children }: { children: string }) => {
   return <ReactMarkdown components={components}>{children}</ReactMarkdown>;
 };
-export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
+export const ChatMessage = ({
+  parts,
+  role,
+  userName,
+  annotations,
+}: ChatMessageProps) => {
   const isAI = role === "assistant";
 
   return (
@@ -54,6 +62,7 @@ export const ChatMessage = ({ parts, role, userName }: ChatMessageProps) => {
         <p className="mb-2 text-sm font-semibold text-gray-400">
           {isAI ? "AI" : userName}
         </p>
+        {isAI && <ReasoningSteps annotations={annotations} />}
         <div className="prose prose-invert max-w-none">
           {parts.map((part, i) => {
             if (part.type === "text") {

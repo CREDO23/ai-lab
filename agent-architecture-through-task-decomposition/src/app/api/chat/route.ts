@@ -157,7 +157,7 @@ export async function POST(request: Request) {
       const { messages } = body;
 
       if (isNewChat) {
-        // If it is a new chat , we need to send the chat ID generated to the frontend
+        // If it is a new chat , we need to send the  generated chat ID to the frontend
 
         dataStream.writeData({
           type: "NEW_CHAT_CREATED",
@@ -173,6 +173,9 @@ export async function POST(request: Request) {
           metadata: {
             langfuseTraceId: trace.id,
           },
+        },
+        writeMessageAnnotation: (annotation) => {
+          dataStream.writeMessageAnnotation(annotation);
         },
         onFinish: async ({ response }) => {
           //Merge the exixsting messages with the response messages
