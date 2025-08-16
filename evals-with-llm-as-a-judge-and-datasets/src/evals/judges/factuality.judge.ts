@@ -1,7 +1,7 @@
 import { createScorer } from "evalite";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { factualityModel } from "~/models";
+import { factualityJudgeModel } from "~/models";
 
 export const checkFactuality = async (opts: {
   question: string;
@@ -9,7 +9,7 @@ export const checkFactuality = async (opts: {
   submission: string;
 }) => {
   const { object } = await generateObject({
-    model : factualityModel, // whichever model you want to use
+    model : factualityJudgeModel, // whichever model you want to use
     /**
      * Prompt taken from autoevals:
      *
@@ -66,7 +66,7 @@ export const checkFactuality = async (opts: {
   };
 };
 
-export const factualityScorer = createScorer<
+export const factualityJudge = createScorer<
   string,
   string,
   string

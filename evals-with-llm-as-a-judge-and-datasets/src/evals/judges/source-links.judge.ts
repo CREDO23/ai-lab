@@ -1,6 +1,6 @@
 import { createScorer } from "evalite";
 
-export const sourceLinksScorer = createScorer<string, string, string>({
+export const sourceLinksJudge = createScorer<string, string, string>({
   name: "Contains Links",
   description: "The response contains at least one markdown link",
   scorer: async ({ output }) => {

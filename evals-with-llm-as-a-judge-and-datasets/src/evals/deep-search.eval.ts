@@ -1,12 +1,13 @@
 import { evalite } from "evalite";
 import type { Message } from "ai";
 import { askDeepSearch } from "~/app/api/services/deep-search.service";
-import { factualityScorer } from "./scrorers/factuality-scorer";
-import { sourceLinksScorer } from "./scrorers/source-links-scorer";
+import { sourceLinksJudge } from "./judges/source-links.judge";
 import { devDataSet } from "./dev";
 import { env } from "~/env";
 import { CIDataSet } from "./ci";
 import { regressionDataSet } from "./regression";
+import { factualityJudge } from "./judges/factuality.judge";
+import { answerRelevancyJudge } from "./judges/answer-relevancy.judge";
 
 const data = devDataSet;
 
@@ -48,5 +49,5 @@ evalite(`Deep search eval, ${env.EVAL_DATASET} dataset`, {
     ];
     return askDeepSearch(messages);
   },
-  scorers: [sourceLinksScorer, factualityScorer],
+  scorers: [sourceLinksJudge, factualityJudge, answerRelevancyJudge],
 });
