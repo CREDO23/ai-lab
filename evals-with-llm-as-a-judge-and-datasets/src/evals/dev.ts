@@ -1,19 +1,11 @@
-import { evalite } from "evalite";
-import type { Message } from "ai";
-import { askDeepSearch } from "~/app/api/services/deep-search.service";
-import { factualityScorer } from "./scrorers/factuality-scorer";
-import { sourceLinksScorer } from "./scrorers/source-links-scorer";
-
-evalite("Initial eval", {
-  data: async (): Promise<{ input: string; expected: string }[]> => {
-    return [
-      {
-        input: "What is the latest version of TypeScript?",
-        expected: "The current TypeScript version is 5.9", // 12 Aug 2025
-      },
-      {
-        input: "What are the main features of Next.js 15?",
-        expected: `
+export const devDataSet = [
+  {
+    input: "What is the latest version of TypeScript?",
+    expected: "The current TypeScript version is 5.9", // 12 Aug 2025
+  },
+  {
+    input: "What are the main features of Next.js 15?",
+    expected: `
 @next/codemod CLI: Easily upgrade to the latest Next.js and React versions.
 Async Request APIs (Breaking): Incremental step towards a simplified rendering and caching model.
 Caching Semantics (Breaking): fetch requests, GET Route Handlers, and client navigations are no longer cached by default.
@@ -30,21 +22,5 @@ Bundling External Packages (Stable): New config options for App and Pages Router
 ESLint 9 Support: Added support for ESLint 9.
 Development and Build Performance: Improved build times and Faster Fast Refresh.
 `,
-      },
-    ];
   },
-  task: async (input) => {
-    const messages: Message[] = [
-      {
-        id: "1",
-        role: "user",
-        content: input,
-      },
-    ];
-    return askDeepSearch(messages);
-  },
-  scorers: [
-    sourceLinksScorer,
-    factualityScorer,
-  ],
-});
+];

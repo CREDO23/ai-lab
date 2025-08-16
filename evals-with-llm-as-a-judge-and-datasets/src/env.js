@@ -22,7 +22,8 @@ export const env = createEnv({
     SERPER_API_KEY: z.string(),
     LANGFUSE_SECRET_KEY : z.string(),
     LANGFUSE_PUBLIC_KEY : z.string(),
-    LANGFUSE_BASEURL : z.string()
+    LANGFUSE_BASEURL : z.string(),
+    EVAL_DATASET : z.enum(["CI", "REGRESSION", "DEV"])
   },
 
   /**
@@ -47,7 +48,8 @@ export const env = createEnv({
     SERPER_API_KEY: process.env.SERPER_API_KEY,
     LANGFUSE_SECRET_KEY : process.env.LANGFUSE_SECRET_KEY,
     LANGFUSE_PUBLIC_KEY : process.env.LANGFUSE_PUBLIC_KEY,
-    LANGFUSE_BASEURL : process.env.LANGFUSE_BASEURL
+    LANGFUSE_BASEURL : process.env.LANGFUSE_BASEURL,
+    EVAL_DATASET : process.env.EVAL_DATASET
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
