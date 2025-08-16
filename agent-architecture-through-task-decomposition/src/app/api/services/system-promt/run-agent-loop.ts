@@ -13,11 +13,11 @@ export type OurMessageAnnotation = {
 
 export async function runAgentLoop(
   messages: Message[],
-  opts: {
-    langfuseTraceId?: string;
-    writeMessageAnnotation?: (annotation: OurMessageAnnotation) => void;
-    onFinish: Parameters<typeof streamText>[0]["onFinish"];
-  },
+//   opts: {
+//     langfuseTraceId?: string;
+//     writeMessageAnnotation?: (annotation: OurMessageAnnotation) => void;
+//     onFinish: Parameters<typeof streamText>[0]["onFinish"];
+//   },
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 ): Promise<StreamTextResult<{}, string>> {
   // A persistent container for the state of our system
@@ -27,15 +27,15 @@ export async function runAgentLoop(
   // or we've taken 10 actions
   while (!ctx.shouldStop()) {
     // We choose the next action based on the state of our system
-    const nextAction = await getNextAction(ctx, opts);
+    const nextAction = await getNextAction(ctx);
 
     // Send the action as an annotation if writeMessageAnnotation is provided
-    if (opts.writeMessageAnnotation) {
-      opts.writeMessageAnnotation({
-        type: "NEW_ACTION",
-        action: nextAction,
-      });
-    }
+    // if (opts.writeMessageAnnotation) {
+    //   opts.writeMessageAnnotation({
+    //     type: "NEW_ACTION",
+    //     action: nextAction,
+    //   });
+    // }
 
     // We execute the action and update the state of our system
     if (nextAction.type === "search") {
@@ -71,7 +71,7 @@ export async function runAgentLoop(
         );
       }
     } else if (nextAction.type === "answer") {
-      return answerQuestion(ctx, { isFinal: false, ...opts });
+      return answerQuestion(ctx, { isFinal: false });
     }
 
     // We increment the step counter
@@ -80,5 +80,5 @@ export async function runAgentLoop(
 
   // If we've taken 10 actions and haven't answered yet,
   // we ask the LLM to give its best attempt at an answer
-  return answerQuestion(ctx, { isFinal: true, ...opts });
+  return answerQuestion(ctx, { isFinal: true });
 }

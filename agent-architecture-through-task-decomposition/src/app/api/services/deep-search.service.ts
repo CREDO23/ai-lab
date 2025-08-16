@@ -1,99 +1,20 @@
-import { type Message, streamText, type TelemetrySettings } from "ai";
-import z from "zod";
-import { bulkCrawlWebsites } from "~/crawler";
-import { env } from "~/env";
-import { model } from "~/models";
-import { searchSerper } from "~/serper";
+import { type Message, type streamText, type StreamTextResult, type TelemetrySettings } from "ai";
+import { runAgentLoop } from "./system-promt/run-agent-loop";
 
 export const streamFromDeepSearch = async (opts: {
   messages: Message[];
   onFinish: Parameters<typeof streamText>[0]["onFinish"];
   telemetry: TelemetrySettings;
-}) => {
-  return streamText({
-    model,
-    messages: opts.messages,
-    system: `You are a helpful AI assistant with access to real-time web search capabilities. The current date is ${new Date().toISOString()}. When answering questions:
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+}) : Promise<StreamTextResult<{}, string>> => {
 
-1. Always search the web for up-to-date information when relevant
-2. ALWAYS format URLs as markdown links using the format [title](url)
-3. Be thorough but concise in your responses
-4. If you're unsure about something, search the web to verify
-5. When providing information, always include the source where you found it using markdown links
-6. Never include raw URLs - always use markdown link format
-7. When users ask for up-to-date information, use the current date to provide context about how recent the information is
-8. IMPORTANT: After finding relevant URLs from search results, ALWAYS use the scrapePages tool to get the full content of those pages. Never rely solely on search snippets.
+  const lastMessage = opts.messages[opts.messages.length - 1];
 
-Your workflow should be:
-1. Use searchWeb to find ${env.SEARCH_RESULTS_COUNT} relevant URLs from diverse sources (news sites, blogs, official documentation, etc.)
-2. Select 4-6 of the most relevant and diverse URLs to scrape
-3. Use scrapePages to get the full content of those URLs
-4. Use the full content to provide detailed, accurate answers
+  if(!lastMessage){
+    throw new Error("No messages provided");
+  }
 
-Remember to:
-- Always scrape multiple sources (4-6 URLs) for each query
-- Choose diverse sources (e.g., not just news sites or just blogs)
-- Prioritize official sources and authoritative websites
-- Use the full content to provide comprehensive answers.
-        `,
-    tools: {
-      searchWeb: {
-        parameters: z.object({
-          query: z.string().describe("The query to search the web for"),
-        }),
-        execute: async ({ query }, { abortSignal }) => {
-          const results = await searchSerper(
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            { q: query, num: env.SEARCH_RESULTS_COUNT },
-            abortSignal,
-          );
-          return results.organic.map((result) => ({
-            title: result.title,
-            link: result.link,
-            snippet: result.snippet,
-            date: result.date,
-          }));
-        },
-      },
-      scrapePages: {
-        parameters: z.object({
-          urls: z.array(z.string().describe("The URL to scrape")),
-        }),
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        execute: async ({ urls }, { abortSignal }) => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const results = await bulkCrawlWebsites({ urls });
-
-          if (!results.success) {
-            return {
-              error: results.error,
-              results: results.results.map(({ url, result }) => {
-                return {
-                  url,
-                  success: result.success,
-                  data: result.success ? result.data : result.error,
-                };
-              }),
-            };
-          }
-
-          return {
-            results: results.results.map(({ url, result }) => {
-              return {
-                url,
-                success: result.success,
-                data: result.data,
-              };
-            }),
-          };
-        },
-      },
-    },
-
-    maxSteps: 10,
-    experimental_telemetry: opts.telemetry,
-    onFinish: opts.onFinish,
-  });
+  return runAgentLoop(opts.messages)
 };
 
 export async function askDeepSearch(messages: Message[]) {

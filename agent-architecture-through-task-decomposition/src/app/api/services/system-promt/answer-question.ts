@@ -6,12 +6,12 @@ export function answerQuestion(
   ctx: SystemContext,
   opts: {
     isFinal?: boolean;
-    langfuseTraceId?: string;
-    onFinish: Parameters<typeof streamText>[0]["onFinish"];
+    // langfuseTraceId?: string;
+    // onFinish: Parameters<typeof streamText>[0]["onFinish"];
   },
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 ): StreamTextResult<{}, string> {
-  const { isFinal = false, langfuseTraceId, onFinish } = opts;
+  const { isFinal = false } = opts;
 
   return streamText({
     model,
@@ -33,15 +33,15 @@ Based on the following context, please answer the question:
 ${ctx.getQueryHistory()}
 
 ${ctx.getScrapeHistory()}`,
-    experimental_telemetry: langfuseTraceId
-      ? {
-          isEnabled: true,
-          functionId: "answer-question",
-          metadata: {
-            langfuseTraceId,
-          },
-        }
-      : undefined,
-    onFinish,
+    // experimental_telemetry: langfuseTraceId
+    //   ? {
+    //       isEnabled: true,
+    //       functionId: "answer-question",
+    //       metadata: {
+    //         langfuseTraceId,
+    //       },
+    //     }
+    //   : undefined,
+    // onFinish,
   });
 }
