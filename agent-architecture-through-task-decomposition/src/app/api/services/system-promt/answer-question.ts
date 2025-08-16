@@ -7,6 +7,7 @@ export function answerQuestion(
   ctx: SystemContext,
   opts: {
     isFinal?: boolean;
+    langfuseTraceId?: string;
   },
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 ): StreamTextResult<{}, string> {
@@ -36,5 +37,14 @@ ${ctx.getScrapeHistory()}`,
       smoothStream({ delayInMs: 150, chunking: "word" }),
       markdownJoinerTransform(),
     ],
+    experimental_telemetry: opts.langfuseTraceId
+      ? {
+          isEnabled: true,
+          functionId: "answer-question",
+          metadata: {
+            langfuseTraceId: opts.langfuseTraceId,
+          },
+        }
+      : undefined,
   });
 }

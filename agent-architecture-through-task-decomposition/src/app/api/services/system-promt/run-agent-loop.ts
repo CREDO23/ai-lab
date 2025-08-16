@@ -11,6 +11,7 @@ export async function runAgentLoop(
   messages: Message[],
   opts: {
     writeMessageAnnotation?: (annotation: OurMessageAnnotation) => void;
+    langfuseTraceId?: string;
   },
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 ): Promise<StreamTextResult<{}, string>> {
@@ -21,7 +22,9 @@ export async function runAgentLoop(
   // or we've taken 10 actions
   while (!ctx.shouldStop()) {
     // We choose the next action based on the state of our system
-    const nextAction = await getNextAction(ctx);
+    const nextAction = await getNextAction(ctx, {
+      langfuseTraceId: opts.langfuseTraceId,
+    });
 
     // Send the action as an annotation if writeMessageAnnotation is provided
     if (opts.writeMessageAnnotation) {
@@ -65,7 +68,7 @@ export async function runAgentLoop(
         );
       }
     } else if (nextAction.type === "answer") {
-      return answerQuestion(ctx, { isFinal: false });
+      return answerQuestion(ctx, { isFinal: false, langfuseTraceId: opts.langfuseTraceId });
     }
 
     // We increment the step counter
@@ -74,5 +77,5 @@ export async function runAgentLoop(
 
   // If we've taken 10 actions and haven't answered yet,
   // we ask the LLM to give its best attempt at an answer
-  return answerQuestion(ctx, { isFinal: true });
+  return answerQuestion(ctx, { isFinal: true, langfuseTraceId: opts.langfuseTraceId });
 }

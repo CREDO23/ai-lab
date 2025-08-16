@@ -167,13 +167,7 @@ export async function POST(request: Request) {
 
       const result = await streamFromDeepSearch({
         messages,
-        telemetry: {
-          isEnabled: true,
-          functionId: "agent-function",
-          metadata: {
-            langfuseTraceId: trace.id,
-          },
-        },
+        langfuseTraceId: trace.id,
         writeMessageAnnotation: (annotation) => {
           dataStream.writeMessageAnnotation(annotation);
         },
