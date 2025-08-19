@@ -31,9 +31,7 @@ ${ctx.getMessageHistory()}
 
 Based on the following context, please answer the question:
 
-${ctx.getQueryHistory()}
-
-${ctx.getScrapeHistory()}`,
+${ctx.getSearchHistory()}`,
     experimental_transform: [
       smoothStream({ delayInMs: 150, chunking: "word" }),
       markdownJoinerTransform(),
