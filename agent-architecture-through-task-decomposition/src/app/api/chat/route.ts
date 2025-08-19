@@ -15,6 +15,7 @@ import {
   globalRateLimitConfig,
   recordRateLimit,
 } from "../services/rate-limit.service";
+import { generateChatTitle } from "~/app/utils/generate-chat-title";
 
 export const maxDuration = 60;
 
@@ -101,13 +102,15 @@ export async function POST(request: Request) {
     return new Response("No messages provided", { status: 400 });
   }
 
+  let titlePromise: Promise<string> | undefined = undefined;
+
   if (isNewChat) {
     const createChatSpan = trace.span({
       name: "create-chat",
       input: {
         chatId,
         userId,
-        chatTitle: messages[messages.length - 1]!.content.slice(0, 50) + "...",
+        chatTitle: "Generating...",
         chatMessages: messages,
       },
     });
@@ -115,9 +118,11 @@ export async function POST(request: Request) {
     await upsertChat({
       chatId,
       userId,
-      chatTitle: messages[messages.length - 1]!.content.slice(0, 50) + "...",
+      chatTitle: "Generating...",
       chatMessages: messages, // Only save the user's message initially
     });
+
+    titlePromise = generateChatTitle(messages);
 
     createChatSpan.end({
       output: {
@@ -148,6 +153,8 @@ export async function POST(request: Request) {
     if (!chat || chat.userId !== userId) {
       return new Response("chat not found or unauthorized", { status: 401 });
     }
+
+    titlePromise = Promise.resolve("")
   }
 
   trace.update({
@@ -189,23 +196,26 @@ export async function POST(request: Request) {
 
           // Add the annotaions to the last message
           lastMessage.annotations = annotaionts;
+           const chatTitle = await titlePromise;
 
           const saveChatHistorySpan = trace.span({
             name: "save-chat-history",
             input: {
               chatId,
               userId,
-              chatTitle: lastMessage.content.slice(0, 50) + "...",
+              ...(chatTitle ? { chatTitle } : {}),
               chatMessages: updatedmessages,
               messageCount: updatedmessages.length,
             },
           });
 
+         
+
           // Save complete chat history (user messages + AI. response messages)
           await upsertChat({
             chatId,
             userId,
-            chatTitle: lastMessage.content.slice(0, 50) + "...",
+            ...(chatTitle ? { chatTitle } : {}),
             chatMessages: updatedmessages,
           });
 

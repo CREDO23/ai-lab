@@ -10,7 +10,7 @@ export async function upsertChat({
   chatTitle,
 }: {
   userId: string;
-  chatTitle: string;
+  chatTitle?: string;
   chatId: string;
   chatMessages: Message[];
 }) {
@@ -27,13 +27,13 @@ export async function upsertChat({
     await db.insert(chats).values({
       id: chatId,
       userId,
-      title: chatTitle,
+      title: chatTitle ?? "Untitled",
     });
   }
 
   // insert messages
 
-  const x = await db.insert(messages).values(
+  await db.insert(messages).values(
     chatMessages.map((message, index) => ({
       id: message.id,
       chatId,
@@ -44,5 +44,8 @@ export async function upsertChat({
     }))
   );
 
-  console.log(x);
+  if(chatTitle){
+    await db.update(chats).set({ title: chatTitle }).where(eq(chats.id, chatId));
+  }
+
 }
