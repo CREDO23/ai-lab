@@ -33,13 +33,16 @@ export async function upsertChat({
 
   // insert messages
 
-  await db.insert(messages).values(
+  const x = await db.insert(messages).values(
     chatMessages.map((message, index) => ({
       id: message.id,
       chatId,
       role: message.role,
       parts: message.parts,
+      annotations: message.annotations,
       order: index,
     }))
   );
+
+  console.log(x);
 }

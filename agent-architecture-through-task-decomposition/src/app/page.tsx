@@ -6,6 +6,7 @@ import { AuthButton } from "../components/auth-button.tsx";
 import type { Message } from "ai";
 import { getChats } from "~/server/db/queries/get-chats.ts";
 import { getChat } from "~/server/db/queries/get-chat.ts";
+import type { OurMessageAnnotation } from "./api/services/deep-search.service.ts";
 
 
 export default async function HomePage({
@@ -46,8 +47,10 @@ export default async function HomePage({
             // parts are always present, and the AI SDK
             // will use the parts to construct the content
             content: "",
+             annotations: (el.annotations ?? []) as OurMessageAnnotation[],
           };
         })
+
 
   return (
     <div className="flex h-screen bg-gray-950">

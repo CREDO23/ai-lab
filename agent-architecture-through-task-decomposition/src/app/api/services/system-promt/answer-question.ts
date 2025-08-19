@@ -8,6 +8,7 @@ export function answerQuestion(
   opts: {
     isFinal?: boolean;
     langfuseTraceId?: string;
+    onFinish: Parameters<typeof streamText>[0]["onFinish"];
   },
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 ): StreamTextResult<{}, string> {
@@ -46,5 +47,6 @@ ${ctx.getScrapeHistory()}`,
           },
         }
       : undefined,
+    onFinish: opts.onFinish,
   });
 }

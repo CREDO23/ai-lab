@@ -1,6 +1,6 @@
 import { SystemContext } from "./system-context";
 import { getNextAction } from "./get-next-action";
-import { type StreamTextResult, type Message } from "ai";
+import { type StreamTextResult, type Message, type streamText } from "ai";
 import { answerQuestion } from "./answer-question";
 import { searchSerper } from "~/serper";
 import { bulkCrawlWebsites } from "~/crawler";
@@ -12,6 +12,7 @@ export async function runAgentLoop(
   opts: {
     writeMessageAnnotation?: (annotation: OurMessageAnnotation) => void;
     langfuseTraceId?: string;
+    onFinish: Parameters<typeof streamText>[0]["onFinish"];
   },
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 ): Promise<StreamTextResult<{}, string>> {
@@ -68,7 +69,7 @@ export async function runAgentLoop(
         );
       }
     } else if (nextAction.type === "answer") {
-      return answerQuestion(ctx, { isFinal: false, langfuseTraceId: opts.langfuseTraceId });
+      return answerQuestion(ctx, { isFinal: false, ...opts });
     }
 
     // We increment the step counter
@@ -77,5 +78,5 @@ export async function runAgentLoop(
 
   // If we've taken 10 actions and haven't answered yet,
   // we ask the LLM to give its best attempt at an answer
-  return answerQuestion(ctx, { isFinal: true, langfuseTraceId: opts.langfuseTraceId });
+  return answerQuestion(ctx, { isFinal: true, ...opts });
 }

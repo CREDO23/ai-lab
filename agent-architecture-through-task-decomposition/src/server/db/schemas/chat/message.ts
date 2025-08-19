@@ -12,6 +12,7 @@ export const messages = createTable("message", {
     .references(() => chats.id),
   role: varchar("role", { length: 255, enum: ["user" , "data" , "assistant" , "system"] }).notNull(),
   parts: json("parts").notNull(),
+  annotations : json("annotations"),
   order : integer("order").notNull(),
   createdAt: timestamp("created_at", {
     mode: "date",

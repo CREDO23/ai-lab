@@ -21,7 +21,7 @@ export const streamFromDeepSearch = async (opts: {
     throw new Error("No messages provided");
   }
 
-  return runAgentLoop(opts.messages, { writeMessageAnnotation: opts.writeMessageAnnotation, langfuseTraceId: opts.langfuseTraceId,})
+  return runAgentLoop(opts.messages, { writeMessageAnnotation: opts.writeMessageAnnotation, langfuseTraceId: opts.langfuseTraceId, onFinish: opts.onFinish})
 };
 
 export async function askDeepSearch(messages: Message[]) {

@@ -9,7 +9,7 @@ import { eq, and } from "drizzle-orm";
 import { chats, userRequests, users } from "~/server/db/schemas";
 import { upsertChat } from "~/server/db/queries/upsert-chat";
 import { Langfuse } from "langfuse";
-import { streamFromDeepSearch } from "../services/deep-search.service";
+import { streamFromDeepSearch, type OurMessageAnnotation } from "../services/deep-search.service";
 import {
   checkRateLimit,
   globalRateLimitConfig,
@@ -95,6 +95,8 @@ export async function POST(request: Request) {
 
   const { chatId, messages, isNewChat } = body;
 
+  const annotaionts: OurMessageAnnotation[] = [];
+
   if (!messages.length) {
     return new Response("No messages provided", { status: 400 });
   }
@@ -169,6 +171,7 @@ export async function POST(request: Request) {
         messages,
         langfuseTraceId: trace.id,
         writeMessageAnnotation: (annotation) => {
+          annotaionts.push(annotation);
           dataStream.writeMessageAnnotation(annotation);
         },
         onFinish: async ({ response }) => {
@@ -183,6 +186,9 @@ export async function POST(request: Request) {
           if (!lastMessage) {
             return;
           }
+
+          // Add the annotaions to the last message
+          lastMessage.annotations = annotaionts;
 
           const saveChatHistorySpan = trace.span({
             name: "save-chat-history",
