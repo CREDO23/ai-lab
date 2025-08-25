@@ -6,6 +6,7 @@ import { searchSerper } from "~/serper";
 import { bulkCrawlWebsites } from "~/crawler";
 import { env } from "~/env";
 import type { OurMessageAnnotation } from "../deep-search.service";
+import { summarizeURL } from "~/app/utils/summarize-url";
 
 export async function runAgentLoop(
   messages: Message[],
@@ -55,29 +56,53 @@ export async function runAgentLoop(
       // 2. Scrape the results
       const crawlResults = await bulkCrawlWebsites({ urls: searchResultUrls });
 
-      // 3. Combine search and scrape results
-      const combinedResults = searchResults.organic.map((result) => {
-        const crawlData = crawlResults.success
-          ? crawlResults.results.find((el) => el.url === result.link)
-          : undefined;
+      // Summarize each scraped result in parallel
+      const summaries = await Promise.all(
+        searchResults.organic.map(async (result) => {
+          const crawlData = crawlResults.success
+            ? crawlResults.results.find((el) => el.url === result.link)
+            : undefined;
 
-        const scrapedContent = crawlData?.result.success
-          ? crawlData.result.data
-          : "Failed to scrape";
+          const scrapedContent = crawlData?.result.success
+            ? crawlData.result.data
+            : "Failed to scrape";
 
-        return {
-          date: result.date ?? new Date().toISOString(),
-          title: result.title,
-          url: result.link,
-          snippet: result.snippet,
-          scrapedContent,
-        };
-      });
+          if (scrapedContent === "Failed to scrape") {
+            return {
+              ...result,
+              summary: "Failed to scrape",
+            };
+          }
+
+          const summary = await summarizeURL({
+            conversation: ctx.getMessageHistory(),
+            scrapedContent,
+            searchMetadata: {
+              date: result.date ?? new Date().toISOString(),
+              title: result.title,
+              url: result.link,
+            },
+            query: nextAction.query!,
+            langfuseTraceId: opts.langfuseTraceId,
+          });
+
+          return {
+            ...result,
+            summary,
+          };
+        }),
+      );
 
       //4. Report the combined results
       ctx.reportSearch({
         query: nextAction.query,
-        results: combinedResults,
+        results: summaries.map((result) => ({
+          date: result.date ?? new Date().toISOString(),
+          title: result.title,
+          url: result.link,
+          snippet: result.snippet,
+          summary: result.summary,
+        })),
       });
     } else if (nextAction.type === "answer") {
       return answerQuestion(ctx, { isFinal: false, ...opts });
