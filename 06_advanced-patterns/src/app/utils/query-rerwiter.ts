@@ -53,6 +53,8 @@ Here is the search history:
 
 ${context.getSearchHistory()}
 
+${context.getLastFeedback() ? `\nLast feedback from evaluation:\n${context.getLastFeedback()}` : ""}
+
 `,
     experimental_telemetry: opts.langfuseTraceId
       ? {

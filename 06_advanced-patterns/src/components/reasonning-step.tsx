@@ -8,9 +8,7 @@ export const ReasoningSteps = ({
 }: {
   annotations: OurMessageAnnotation[];
 }) => {
-  const [openStep, setOpenStep] = useState<
-    number | null
-  >(null);
+  const [openStep, setOpenStep] = useState<number | null>(null);
 
   if (annotations.length === 0) return null;
 
@@ -22,9 +20,7 @@ export const ReasoningSteps = ({
           return (
             <li key={index} className="relative">
               <button
-                onClick={() =>
-                  setOpenStep(isOpen ? null : index)
-                }
+                onClick={() => setOpenStep(isOpen ? null : index)}
                 className={`min-w-34 flex w-full flex-shrink-0 items-center rounded px-2 py-1 text-left text-sm transition-colors ${
                   isOpen
                     ? "bg-gray-700 text-gray-200"
@@ -42,15 +38,11 @@ export const ReasoningSteps = ({
                 </span>
                 {annotation.action.title}
               </button>
-              <div
-                className={`${isOpen ? "mt-1" : "hidden"}`}
-              >
+              <div className={`${isOpen ? "mt-1" : "hidden"}`}>
                 {isOpen && (
                   <div className="px-2 py-1">
                     <div className="text-sm italic text-gray-400">
-                      <Markdown>
-                        {annotation.action.reasoning}
-                      </Markdown>
+                      <Markdown>{annotation.action.reasoning}</Markdown>
                     </div>
                     {annotation.action.type === "continue" && (
                       <div className="mt-2 flex flex-col gap-2 text-sm text-gray-400">
@@ -58,16 +50,19 @@ export const ReasoningSteps = ({
                           <SearchIcon className="size-4" />
                           <span>Continuing search...</span>
                         </div>
+                        <div className="mt-2 border-l-2 border-gray-700 pl-4">
+                          <div className="font-medium text-gray-300">
+                            Feedback:
+                          </div>
+                          <Markdown>{annotation.action.feedback!}</Markdown>
+                        </div>
                       </div>
                     )}
-                    {
-                    annotation.action.type ===
-                      "answer" && (
+                    {annotation.action.type === "answer" && (
                       <div className="mt-2 flex items-center gap-2 text-sm text-gray-400">
                         <span>Answering</span>
                       </div>
-                    )
-                    }
+                    )}
                   </div>
                 )}
               </div>
