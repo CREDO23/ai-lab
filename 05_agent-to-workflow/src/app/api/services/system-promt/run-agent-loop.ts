@@ -4,9 +4,10 @@ import { type StreamTextResult, type Message, type streamText } from "ai";
 import { answerQuestion } from "./answer-question";
 import { searchSerper } from "~/serper";
 import { bulkCrawlWebsites } from "~/crawler";
-import { env } from "~/env";
 import type { OurMessageAnnotation } from "../deep-search.service";
 import { summarizeURL } from "~/app/utils/summarize-url";
+import { queryRewriter } from "~/app/utils/query-rerwiter";
+import { env } from "~/env";
 
 export async function runAgentLoop(
   messages: Message[],
@@ -23,54 +24,47 @@ export async function runAgentLoop(
   // A loop that continues until we have an answer
   // or we've taken 10 actions
   while (!ctx.shouldStop()) {
-    // We choose the next action based on the state of our system
-    const nextAction = await getNextAction(ctx, {
-      langfuseTraceId: opts.langfuseTraceId,
-    });
+    // 1. Get the plan and queries
+    const { queries } = await queryRewriter(ctx, opts);
 
-    console.log("Next action: ", nextAction.type);
-
-    // Send the action as an annotation if writeMessageAnnotation is provided
-    if (opts.writeMessageAnnotation) {
-      opts.writeMessageAnnotation({
-        type: "NEW_ACTION",
-        action: nextAction,
-      });
-    }
-
-    // We execute the action and update the state of our system
-    if (nextAction.type === "search") {
-      if (!nextAction.query) {
-        throw new Error("Query is required for search action");
-      }
-      // 1. Search the web
+    // 2. Execute all queries in parallel
+    const searchResultsPromises = queries.map(async (query) => {
       const searchResults = await searchSerper(
-        { q: nextAction.query, num: env.SEARCH_RESULTS_COUNT },
+        { q: query, num: 2 },
         undefined,
       );
 
-      const searchResultUrls = searchResults.organic.map(
-        (result) => result.link,
-      );
+      return {
+        query,
+        results: searchResults.organic,
+      };
+    });
 
-      // 2. Scrape the results
+    // 3. Wait for all search results
+    const allSearchResults = await Promise.all(searchResultsPromises);
+
+    // 4. Process each query's results
+    const processPromises = allSearchResults.map(async ({ query, results }) => {
+      const searchResultUrls = results.map((r) => r.link);
+
+      // Scrape the results
       const crawlResults = await bulkCrawlWebsites({ urls: searchResultUrls });
 
       // Summarize each scraped result in parallel
       const summaries = await Promise.all(
-        searchResults.organic.map(async (result) => {
+        results.map(async (result) => {
           const crawlData = crawlResults.success
-            ? crawlResults.results.find((el) => el.url === result.link)
+            ? crawlResults.results.find((cr) => cr.url === result.link)
             : undefined;
 
           const scrapedContent = crawlData?.result.success
             ? crawlData.result.data
-            : "Failed to scrape";
+            : "Failed to scrape.";
 
-          if (scrapedContent === "Failed to scrape") {
+          if (scrapedContent === "Failed to scrape.") {
             return {
               ...result,
-              summary: "Failed to scrape",
+              summary: "Failed to scrape, so no summary could be generated.",
             };
           }
 
@@ -82,7 +76,7 @@ export async function runAgentLoop(
               title: result.title,
               url: result.link,
             },
-            query: nextAction.query!,
+            query,
             langfuseTraceId: opts.langfuseTraceId,
           });
 
@@ -93,18 +87,34 @@ export async function runAgentLoop(
         }),
       );
 
-      //4. Report the combined results
+      // Report the summaries to the system context
       ctx.reportSearch({
-        query: nextAction.query,
-        results: summaries.map((result) => ({
-          date: result.date ?? new Date().toISOString(),
-          title: result.title,
-          url: result.link,
-          snippet: result.snippet,
-          summary: result.summary,
+        query,
+        results: summaries.map((summaryResult) => ({
+          date: summaryResult.date ?? new Date().toISOString(),
+          title: summaryResult.title,
+          url: summaryResult.link,
+          snippet: summaryResult.snippet,
+          summary: summaryResult.summary,
         })),
       });
-    } else if (nextAction.type === "answer") {
+    });
+
+    // 5. Wait for all processing to complete
+    await Promise.all(processPromises);
+
+    // 6. Decide the next action based on the state of our system
+    const nextAction = await getNextAction(ctx,opts);
+
+    // Send the action as an annotation if writeMessageAnnotation is provided
+    if (opts.writeMessageAnnotation) {
+      opts.writeMessageAnnotation({
+        type: "NEW_ACTION",
+        action: nextAction,
+      });
+    }
+
+    if (nextAction.type === "answer") {
       return answerQuestion(ctx, { isFinal: false, ...opts });
     }
 
