@@ -7,7 +7,6 @@ import { bulkCrawlWebsites } from "~/crawler";
 import type { OurMessageAnnotation } from "../deep-search.service";
 import { summarizeURL } from "~/app/utils/summarize-url";
 import { queryRewriter } from "~/app/utils/query-rerwiter";
-import { env } from "~/env";
 
 export async function runAgentLoop(
   messages: Message[],
