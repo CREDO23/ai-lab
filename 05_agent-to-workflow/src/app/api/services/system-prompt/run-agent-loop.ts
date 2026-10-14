@@ -6,7 +6,7 @@ import { searchSerper } from "~/serper";
 import { bulkCrawlWebsites } from "~/crawler";
 import type { OurMessageAnnotation } from "../deep-search.service";
 import { summarizeURL } from "~/app/utils/summarize-url";
-import { queryRewriter } from "~/app/utils/query-rerwiter";
+import { queryRewriter } from "~/app/utils/query-rewriter";
 
 export async function runAgentLoop(
   messages: Message[],
@@ -28,7 +28,10 @@ export async function runAgentLoop(
 
     // 2. Execute all queries in parallel
     const searchResultsPromises = queries.map(async (query) => {
-      const searchResults = await searchSerper({ q: query, num: 10 }, undefined);
+      const searchResults = await searchSerper(
+        { q: query, num: 2 },
+        undefined,
+      );
 
       return {
         query,
@@ -100,12 +103,7 @@ export async function runAgentLoop(
     await Promise.all(processPromises);
 
     // 6. Decide the next action based on the state of our system
-    const nextAction = await getNextAction(ctx, opts);
-
-    // 7. Store the feedback in the system context only if it exists
-    if (nextAction.feedback) {
-      ctx.setLastFeedback(nextAction.feedback);
-    }
+    const nextAction = await getNextAction(ctx,opts);
 
     // Send the action as an annotation if writeMessageAnnotation is provided
     if (opts.writeMessageAnnotation) {

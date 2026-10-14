@@ -1,6 +1,6 @@
 import { type Message, type streamText, type StreamTextResult } from "ai";
-import type { Action } from "./system-promt/get-next-action";
-import { runAgentLoop } from "./system-promt/run-agent-loop";
+import type { Action } from "./system-prompt/get-next-action";
+import { runAgentLoop } from "./system-prompt/run-agent-loop";
 
 export type OurMessageAnnotation = {
   type: "NEW_ACTION";
