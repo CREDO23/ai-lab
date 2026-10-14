@@ -1,17 +1,31 @@
-## What I did
+# 06 · Advanced patterns
 
-TBD
+**Goal:** add an evaluator, so each iteration says what's still missing and the next one searches for it.
 
-## How to Setup
+## What changed from [05](../05_agent-to-workflow/)
 
-1. Install dependencies with `pnpm`
+- `getNextAction` now acts as an evaluator. It compares the search results with what the question asks for, and when it chooses `continue` it returns `feedback` on what's missing.
+- The feedback is stored in `SystemContext` and passed to the query rewriter in the next iteration.
+- The reasoning steps show the feedback under "Continuing search…".
+- Each query fetches 10 Serper results instead of 2.
 
-```bash
-pnpm install
-```
+**Planned, not built:** guardrails, a clarifying-question step and a token-usage display. They're named in the commit that created this stage, but they aren't implemented.
 
-2. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+**Known issue:** `SEARCH_RESULTS_COUNT` is validated but not used; the number of results per query is hard-coded to 10 in `run-agent-loop.ts`.
 
-3. Run `./start-database.sh` to start the database.
+## Key files
 
-4. Run `./start-redis.sh` to start the Redis server.
+- [`src/app/api/services/system-prompt/get-next-action.ts`](src/app/api/services/system-prompt/get-next-action.ts): evaluator prompt and `feedback` field
+- [`src/app/api/services/system-prompt/system-context.ts`](src/app/api/services/system-prompt/system-context.ts): stores the last feedback
+- [`src/app/api/services/system-prompt/run-agent-loop.ts`](src/app/api/services/system-prompt/run-agent-loop.ts): passes feedback along
+- [`src/app/utils/query-rewriter.ts`](src/app/utils/query-rewriter.ts): uses the feedback when it plans
+- [`src/components/reasoning-step.tsx`](src/components/reasoning-step.tsx): shows the feedback
+
+## How to run
+
+Same as [04](../04_agent-architecture-through-task-decomposition/): follow [How to run a stage](../README.md#how-to-run-a-stage), and use `pnpm db:push`.
+
+## Notes
+
+- What I learned at this stage: [observations.md](observations.md)
+- Notes that apply to every stage: [OBSERVATIONS.md](../OBSERVATIONS.md)
