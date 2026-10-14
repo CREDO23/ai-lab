@@ -49,6 +49,8 @@ pnpm db:push            # create or update the tables
 pnpm dev                # http://localhost:3000
 ```
 
+Use `pnpm db:push`, not `pnpm db:migrate`: the migration files in each `drizzle/` folder are out of date, and `db:migrate` fails on a fresh database.
+
 From stage 02 on, `pnpm evals` runs the evals. From stage 03 on, set `EVAL_DATASET` to `DEV`, `CI` or `REGRESSION`. Evals call the real agent, so they need the same keys and services as the app.
 
 All stages use the same Docker containers and database, so run one stage at a time. Each stage's README lists anything else specific to it.
