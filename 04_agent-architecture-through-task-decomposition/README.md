@@ -26,7 +26,7 @@
 
 ## How to run
 
-Follow [How to run a stage](../README.md#how-to-run-a-stage) in the root README, inside this folder. Use `pnpm db:push`: there's no migration file for the `annotations` column, so `pnpm db:migrate` won't add it. `pnpm evals` works as in [03](../03_evals-with-llm-as-a-judge-and-datasets/).
+Follow [How to run a stage](../README.md#how-to-run-a-stage) in the root README, inside this folder. Use `pnpm db:push`, not `pnpm db:migrate`: the migration files in `drizzle/` are out of date (they don't include the `annotations` column, and `db:migrate` fails on a fresh database). `pnpm evals` works as in [03](../03_evals-with-llm-as-a-judge-and-datasets/).
 
 ## Notes
 
