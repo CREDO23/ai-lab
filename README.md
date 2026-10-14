@@ -29,8 +29,8 @@ Each stage has its own README (what changed and the key files) and `observations
 
 **Prerequisites**
 
-- Node.js 20 or 22. On Node 24, `pnpm install` has to compile `better-sqlite3` (used by evalite) from source, which needs node-gyp build tools.
-- pnpm. Each `package.json` pins pnpm 9.12.3, and `corepack enable` picks that version up.
+- Node.js 22. On Node 24, `pnpm install` has to compile `better-sqlite3` (used by evalite) from source, which needs node-gyp build tools; Node 22 downloads a prebuilt binary.
+- pnpm. Each `package.json` pins pnpm 9.12.3, and recent pnpm versions (and corepack) switch to it automatically.
 - Docker, for Postgres and Redis.
 - API keys and accounts:
   - a Google AI Studio key (Gemini)
