@@ -22,4 +22,4 @@ The loop is capped at 10 steps. Past that, the model answers with what it has an
 
 ---
 
-Streaming word by word can show half-written Markdown, like a link without its URL yet. The joiner transform holds back links and emphasis until they're complete.
+Streaming word by word can show half-written Markdown, like a link without its URL yet. The joiner transform holds back links and bold text until they're complete.

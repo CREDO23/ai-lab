@@ -6,7 +6,7 @@
 
 - The `streamText` call (prompt plus the `searchWeb` and `scrapePages` tools) moved out of the route into `streamFromDeepSearch` in [`deep-search.service.ts`](src/app/api/services/deep-search.service.ts). `askDeepSearch` runs it without the HTTP layer and returns the final text.
 - A first evalite eval, [`initial.eval.ts`](initial.eval.ts), with two questions. Its only scorer is deterministic: it checks that the answer contains at least one Markdown link. `pnpm evals` runs `evalite watch`.
-- A Redis rate limiter in [`rate-limit.service.ts`](src/app/api/services/rate-limit.service.ts): one global fixed window of 1 request per 20 seconds. When the limit is hit, the route waits for the window to reset and retries up to 3 times before returning 429. If Redis fails, requests are allowed.
+- A Redis rate limiter in [`rate-limit.service.ts`](src/app/api/services/rate-limit.service.ts): one global fixed window of 1 request per 20 seconds. When the limit is hit, the route waits for the window to reset and retries up to 3 times before returning 429. If Redis fails, the check lets the request through, but recording it then throws, so the request fails anyway.
 - The per-user daily limit goes from 10 to 200 requests.
 
 ## Key files

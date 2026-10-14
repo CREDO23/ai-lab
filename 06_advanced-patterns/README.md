@@ -6,7 +6,7 @@
 
 - `getNextAction` now acts as an evaluator. It compares the search results with what the question asks for, and when it chooses `continue` it returns `feedback` on what's missing.
 - The feedback is stored in `SystemContext` and passed to the query rewriter in the next iteration.
-- The reasoning steps show the feedback under "Continuing search…".
+- The reasoning steps show the feedback under "Continuing search...".
 - Each query fetches 10 Serper results instead of 2.
 
 **Planned, not built:** guardrails, a clarifying-question step and a token-usage display. They're named in the commit that created this stage, but they aren't implemented.
