@@ -1,46 +1,19 @@
-The best way I've currently found a store messages in the database is to store them as a JSON blob. I find this pretty dangerous, Because the shape of your database then has a dependency on what the AI SDK expects.
+# Observations · 03 Evals with LLM-as-a-judge and datasets
+
+Notes that apply to every stage are in [OBSERVATIONS.md](../OBSERVATIONS.md).
 
 ---
 
-There is a big context window trade-off between feeding the output of the crawler directly into the LLM or doing some kind of summary beforehand.
-
-Ideally we would search the text of the page for the most relevant information and feed that into the LLM. That's the motivation behind the RAG approach.
+The factuality judge doesn't ask the model for a number. The model picks one of five categories (prompt taken from autoevals), and the code maps each category to a fixed score.
 
 ---
 
-Implementing your own crawler can be faster. Firecrawl does a lot of things for you, but you may not need all of them.
-
-However, it's a major trade off. Owning the crawling logic means you're owning a lot more code.
+Answer relevancy is scored statement by statement: the answer is split into statements, each one gets yes, unsure or no, and the score is the average.
 
 ---
 
-Using an agentic feedback loop is great for generalising your app and making it better at more things. But it's a massive latency trade-off.
-
-If you want to specialise in one thing, you should probably use workflows. This means you can end up doing a lot more work in parallel.
+The datasets are split by purpose. DEV questions are about current versions (TypeScript, Next.js 15), so their expected answers are dated and go stale. CI and regression questions are about stable concepts (TDD, DDD).
 
 ---
 
-Possible flow:
-
-1. Simple agent with tool calls (streamText)
-
-- One `searchWeb` tool call which searches, crawls and summarizes, then creates a summary from there.
-- Relatively low amount of code, but painful latency
-
-1. Add RAG to the summaries to take the latency lower.
-
-1. Raise complexity of agent using <thinking> tags, make it better at more complex and general questions.
-
-1. Rewrite Query -> Crawl Sites -> Summarize -> streamText. Good, but simple and not great at complex questions.
-
-1. Raise complexity of workflow by adding a planning step to the query rewriter.
-
-1. Add a queue for the workflow to continue processing more complex questions.
-
----
-
-Message annotations are cool because they let you stream in metadata about the message.
-
-To persist them, you just save the most up-to-date ones in memory when you save the final message. Then, they'll be hydrated when you load the message back into the AI SDK.
-
----
+The judge models are separate exports from the agent model, so a different model can be used as the judge. For now they all point to the same model.
