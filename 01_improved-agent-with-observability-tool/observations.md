@@ -2,20 +2,10 @@
 
 Notes that apply to every stage are in [OBSERVATIONS.md](../OBSERVATIONS.md).
 
----
+**A hand-written crawler is small, but you own its gaps.** `src/crawler/` handles `robots.txt`, retries, main-content extraction and caching. But it reads raw HTML (`fetch` + cheerio), so content rendered by JavaScript never reaches the model. A hosted crawler like Firecrawl covers more cases; owning yours means maintaining every fix.
 
-Implementing your own crawler can be faster. Firecrawl does a lot of things for you, but you may not need all of them.
+**Give the model today's date.** It doesn't know it, so it can't tell whether a result is recent. Put the date in the system prompt for any time-sensitive task.
 
-However, it's a major trade off. Owning the crawling logic means you're owning a lot more code.
+**Snippets are thin; full pages are expensive.** The prompt asks for 4–6 scraped pages instead of snippets, so every page lands in the context window. Stage 05 summarises pages to cut that.
 
----
-
-The system prompt now includes today's date, so the model can say how recent the information it found is.
-
----
-
-The prompt tells the model to scrape 4–6 pages and never rely on search snippets alone. That puts whole pages into the context window; stage 05 adds a summary step for this.
-
----
-
-Spans wrap each database step (request-limit check, chat creation, saving the history), so a trace shows those steps next to the LLM call, not only the model's work.
+**Trace the whole request, not only the LLM call.** Langfuse spans wrap the request-limit check, chat creation and history saving, so one trace shows where a slow or failed request spent its time.

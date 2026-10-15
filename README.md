@@ -57,9 +57,9 @@ All stages use the same Docker containers and database, so run one stage at a ti
 
 ## What I learned
 
-- **Storing AI SDK messages as JSON is the easy path, but it ties the database to the SDK.** The schema then depends on what the AI SDK expects. ([00](00_naive-agent/observations.md), `message.ts`)
-- **A hand-written crawler is lean but costly to own.** It does only what the app needs (robots.txt, retries, main-content extraction), but all that code is now mine to maintain. Firecrawl does more out of the box. ([01](01_improved-agent-with-observability-tool/observations.md), `src/crawler/`)
-- **Evals start with making the agent callable outside the route.** The first scorer was a cheap deterministic link check. The LLM judges that followed are constrained: the factuality judge picks a category that maps to a fixed score, and relevancy is averaged statement by statement. ([02](02_agent-with-evals-tests/observations.md), [03](03_evals-with-llm-as-a-judge-and-datasets/observations.md), `src/evals/judges/`)
-- **Context is the budget to manage.** Search results are passed to the model as Markdown text rather than JSON, which wastes tokens on braces and quotes. Scraped pages are summarised by a smaller model before the main model reads them. ([04](04_agent-architecture-through-task-decomposition/observations.md) `system-context.ts`, [05](05_agent-to-workflow/observations.md) `summarize-url.ts`)
-- **An open agent loop generalises; a workflow is more predictable and runs more in parallel.** Moving to plan → parallel search → summarise made each iteration's steps fixed, though the model still decides when to stop. ([05](05_agent-to-workflow/observations.md), `run-agent-loop.ts`, `query-rewriter.ts`)
-- **An evaluator gives the next search a target.** Instead of re-planning from the history alone, the next query rewrite gets explicit feedback on what's missing. ([06](06_advanced-patterns/observations.md), `get-next-action.ts`)
+- **Storing AI SDK messages as JSON is quick, but it ties your data to the SDK version.** ([00](00_naive-agent/observations.md))
+- **A hand-written crawler is small, but you own its gaps**, such as pages rendered by JavaScript. ([01](01_improved-agent-with-observability-tool/observations.md))
+- **To test an agent, take it out of the HTTP route.** Start with cheap deterministic checks, then add LLM judges that pick a category rather than a number. ([02](02_agent-with-evals-tests/observations.md), [03](03_evals-with-llm-as-a-judge-and-datasets/observations.md))
+- **Context is the budget.** Pass text instead of JSON, and summarise pages with a smaller model before the main model reads them. ([04](04_agent-architecture-through-task-decomposition/observations.md), [05](05_agent-to-workflow/observations.md))
+- **An agent loop generalises; a workflow can do more in parallel**, though the model can still decide when to stop. ([05](05_agent-to-workflow/observations.md))
+- **Make "not done yet" say what's missing**, so the next search has a target. ([06](06_advanced-patterns/observations.md))

@@ -1,22 +1,12 @@
 # Observations across all stages
 
-Each stage folder has its own `observations.md` with what that stage taught. The note below is about the whole progression.
+Each stage folder has its own `observations.md`. Below are the ways to grow a deep-search agent that I listed early on, and which ones this repo built.
 
----
-
-Possible flow:
-
-1. Simple agent with tool calls (streamText)
-
-- One `searchWeb` tool call which searches, crawls and summarizes, then creates a summary from there.
-- Relatively low amount of code, but painful latency
-
-1. Add RAG to the summaries to take the latency lower.
-
-1. Raise complexity of agent using `<thinking>` tags, make it better at more complex and general questions.
-
-1. Rewrite Query -> Crawl Sites -> Summarize -> streamText. Good, but simple and not great at complex questions.
-
-1. Raise complexity of workflow by adding a planning step to the query rewriter.
-
-1. Add a queue for the workflow to continue processing more complex questions.
+| Idea | Trade-off I noted | Status |
+|---|---|---|
+| Simple agent with tool calls (`streamText`) | Little code, painful latency | Built in 00–03 (separate search and scrape tools) |
+| Rewrite query → crawl → summarise → stream the answer | Simple, but weaker on complex questions | Built in 05 |
+| Planning step in the query rewriter | More deliberate searches | Built in 05 |
+| RAG on the summaries | Lower latency | Not built |
+| `<thinking>` tags | Better at complex, general questions | Not built (04 uses structured next actions instead) |
+| Queue for long-running questions | Keeps working on complex questions | Not built |

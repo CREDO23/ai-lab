@@ -2,24 +2,12 @@
 
 Notes that apply to every stage are in [OBSERVATIONS.md](../OBSERVATIONS.md).
 
----
+**Annotations stream metadata alongside a message.** Each loop step is sent as one and shown as a reasoning step. To keep them, save the latest ones with the final message; they come back when the chat loads. AI SDK 4 only: version 5 replaced them with custom data parts.
 
-Message annotations are cool because they let you stream in metadata about the message.
+**Give the model text, not JSON.** `SystemContext` renders search results as Markdown; JSON would spend tokens on `{`, `"` and `}`.
 
-To persist them, you just save the most up-to-date ones in memory when you save the final message. Then, they'll be hydrated when you load the message back into the AI SDK.
+**Fence content you didn't write.** Scraped pages can contain Markdown themselves, so they go inside `<scrape_result>` tags to stay apart from the prompt's own headings.
 
----
+**Cap the agent loop.** After 10 steps the model must answer with what it has, and is told it may be incomplete. Without a cap, a model that keeps choosing "search" runs up cost and never answers.
 
-JSON is not a good format for passing search results to the model: it spends tokens on `{`, `"` and `}`. `SystemContext` renders them as Markdown text instead.
-
----
-
-Scraped pages can themselves be Markdown, so they're wrapped in `<scrape_result>` tags to keep them apart from the prompt's own headings.
-
----
-
-The loop is capped at 10 steps. Past that, the model answers with what it has and is told the information may be incomplete.
-
----
-
-Streaming word by word can show half-written Markdown, like a link without its URL yet. The joiner transform holds back links and bold text until they're complete.
+**Smooth streaming can split Markdown.** Word-by-word streaming can show half a link before its URL arrives; `markdown-joiner-transform.ts` holds back links and bold text until they're complete.
