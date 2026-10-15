@@ -1,6 +1,6 @@
 import { generateObject } from "ai";
 import { z } from "zod";
-import type { SystemContext } from "../api/services/system-promt/system-context";
+import type { SystemContext } from "../api/services/system-prompt/system-context";
 import { model } from "~/models";
 
 const queryRewriterSchema = z.object({
@@ -52,8 +52,6 @@ Based on this context, create a research plan and generate search queries that w
 Here is the search history:
 
 ${context.getSearchHistory()}
-
-${context.getLastFeedback() ? `\nLast feedback from evaluation:\n${context.getLastFeedback()}` : ""}
 
 `,
     experimental_telemetry: opts.langfuseTraceId

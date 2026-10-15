@@ -1,7 +1,7 @@
 import { smoothStream, streamText, type StreamTextResult } from "ai";
 import { type SystemContext } from "./system-context";
 import { model } from "~/models";
-import { markdownJoinerTransform } from "../../../utils/marksown-joiner-transform";
+import { markdownJoinerTransform } from "../../../utils/markdown-joiner-transform";
 
 export function answerQuestion(
   ctx: SystemContext,
