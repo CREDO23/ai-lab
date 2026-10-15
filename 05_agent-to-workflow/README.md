@@ -8,7 +8,7 @@
 - **Query rewriter** ([`query-rewriter.ts`](src/app/utils/query-rewriter.ts)): writes a research plan and 3–5 search queries from the conversation and the search history so far.
 - The queries run in parallel. Each one fetches 2 Serper results, which are scraped and summarised.
 - **Summariser** ([`summarize-url.ts`](src/app/utils/summarize-url.ts)): condenses each scraped page for the query and conversation, using `gemini-2.0-flash-lite`. Summaries are cached in Redis, and the context now keeps summaries instead of full pages.
-- The next-action step only chooses between `continue` and `answer`, because searching and scraping are no longer separate actions. The reasoning steps show "Continuing search…" or "Answering".
+- The next-action step only chooses between `continue` and `answer`, because searching and scraping are no longer separate actions. The reasoning steps show "Continuing search..." or "Answering".
 - `SystemContext` merges the query and scrape history into one search history: each query with its results, snippets and summaries.
 
 **Known issues**

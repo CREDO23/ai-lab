@@ -16,4 +16,4 @@ The first scorer is deterministic: it only checks that the answer contains a Mar
 
 ---
 
-The Redis rate limiter fails open: if Redis can't be reached, the request is allowed instead of blocked.
+The rate-limit check fails open: if Redis can't be read, `checkRateLimit` allows the request. Recording it doesn't: `recordRateLimit` rethrows, so with Redis down the request still fails.
