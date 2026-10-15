@@ -122,7 +122,12 @@ export async function POST(request: Request) {
       chatMessages: messages, // Only save the user's message initially
     });
 
-    titlePromise = generateChatTitle(messages);
+    // Catch here so a failed title neither leaves an unhandled rejection
+    // nor makes onFinish throw before the chat history is saved
+    titlePromise = generateChatTitle(messages).catch((error) => {
+      console.error("Failed to generate the chat title:", error);
+      return messages[messages.length - 1]!.content.slice(0, 50) + "...";
+    });
 
     createChatSpan.end({
       output: {
