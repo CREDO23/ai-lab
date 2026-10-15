@@ -57,9 +57,9 @@ All stages use the same Docker containers and database, so run one stage at a ti
 
 ## What I learned
 
-- **Storing AI SDK messages as JSON is quick, but it ties your data to the SDK version.** ([00](00_naive-agent/observations.md))
-- **A hand-written crawler is small, but you own its gaps**, such as pages rendered by JavaScript. ([01](01_improved-agent-with-observability-tool/observations.md))
-- **To test an agent, take it out of the HTTP route.** Start with cheap deterministic checks, then add LLM judges that pick a category rather than a number. ([02](02_agent-with-evals-tests/observations.md), [03](03_evals-with-llm-as-a-judge-and-datasets/observations.md))
-- **Context is the budget.** Pass text instead of JSON, and summarise pages with a smaller model before the main model reads them. ([04](04_agent-architecture-through-task-decomposition/observations.md), [05](05_agent-to-workflow/observations.md))
+- **Storing AI SDK messages as JSON is quick, but it ties the data to the SDK version.** ([00](00_naive-agent/observations.md))
+- **A hand-written crawler is small, but I own its gaps**, such as pages rendered by JavaScript. ([01](01_improved-agent-with-observability-tool/observations.md))
+- **Testing an agent starts with taking it out of the HTTP route.** Cheap deterministic checks came first, then LLM judges that pick a category rather than a number. ([02](02_agent-with-evals-tests/observations.md), [03](03_evals-with-llm-as-a-judge-and-datasets/observations.md))
+- **Context is the budget.** Text instead of JSON, and page summaries from a smaller model, keep the main model's input small. ([04](04_agent-architecture-through-task-decomposition/observations.md), [05](05_agent-to-workflow/observations.md))
 - **An agent loop generalises; a workflow can do more in parallel**, though the model can still decide when to stop. ([05](05_agent-to-workflow/observations.md))
-- **Make "not done yet" say what's missing**, so the next search has a target. ([06](06_advanced-patterns/observations.md))
+- **"Not done yet" is more useful when it says what's missing**: the next search gets a target. ([06](06_advanced-patterns/observations.md))
