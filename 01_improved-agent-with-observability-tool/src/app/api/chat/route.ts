@@ -203,7 +203,7 @@ Remember to:
             parameters: z.object({
               urls: z.array(z.string().describe("The URL to scrape")),
             }),
-            execute: async ({ urls }, { abortSignal }) => {
+            execute: async ({ urls }: { urls: string[] }) => {
               const results = await bulkCrawlWebsites({urls});
        
               if(!results.success){
